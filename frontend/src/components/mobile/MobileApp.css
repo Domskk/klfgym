@@ -1,0 +1,617 @@
+/* Main Container */
+.mobile-app-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: #050505;
+  padding: 2rem 1rem;
+}
+
+.mobile-app-container {
+  width: 960px;
+  background: #1a1a1a;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #3a3a3a, 0 40px 80px rgba(0, 0, 0, 0.8);
+}
+
+.mobile-app-container.mobile {
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Notch */
+.mobile-app-notch {
+  background: #1a1a1a;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-app-notch-inner {
+  background: #1a1a1a;
+  width: 120px;
+  height: 22px;
+  border-radius: 20px;
+}
+
+/* Screen */
+.mobile-app-screen {
+  height: 760px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-app-screen.mobile {
+  height: 100vh;
+}
+
+.mobile-app-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.mobile-app-inner {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar */
+.mobile-app-sidebar {
+  width: 220px;
+  padding: 20px;
+  background: #070707;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.mobile-app-brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: #F0C040;
+  letter-spacing: 1.1px;
+  margin-bottom: 24px;
+}
+
+.mobile-app-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-app-menu-btn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: #777;
+  font-weight: 600;
+  justify-content: flex-start;
+  transition: background 0.15s;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+.mobile-app-menu-btn.active {
+  color: #F0C040;
+  background-color: rgba(240, 192, 64, 0.12);
+}
+
+.mobile-app-logout-btn {
+  margin-top: 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: #F0C040;
+  font-weight: 700;
+  justify-content: flex-start;
+}
+
+/* Dashboard */
+.mobile-app-dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.mobile-app-cards-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.mobile-app-card {
+  flex: 1;
+  min-width: 240px;
+  background: #0c0c0c;
+  border-radius: 22px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-app-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mobile-app-card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #F0C040;
+}
+
+.mobile-app-card-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: #aaa;
+}
+
+.mobile-app-card-time {
+  text-align: right;
+}
+
+.mobile-app-card-time-large {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.mobile-app-card-time-small {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.mobile-app-card-bg-blur {
+  position: absolute;
+  right: 16px;
+  top: 14px;
+  width: 130px;
+  height: 130px;
+  border-radius: 22px;
+  background: rgba(240, 192, 64, 0.15);
+  filter: blur(28px);
+  z-index: 0;
+}
+
+.mobile-app-membership-header {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.mobile-app-membership-plan {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mobile-app-membership-name {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.mobile-app-membership-info-right {
+  text-align: right;
+}
+
+.mobile-app-membership-days {
+  font-size: 18px;
+  font-weight: 700;
+  color: #F0C040;
+}
+
+.mobile-app-membership-expires {
+  font-size: 11px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.mobile-app-progress-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  height: 6px;
+  width: calc(100% - 24px);
+  background: rgba(240, 192, 64, 0.2);
+  border-radius: 4px;
+}
+
+.mobile-app-progress-fill {
+  height: 100%;
+  background: #F0C040;
+  border-radius: 4px;
+}
+
+/* Reminder Box */
+.mobile-app-reminder {
+  background: #070707;
+  border: 1px solid rgba(240, 192, 64, 0.2);
+  border-radius: 16px;
+  padding: 14px 18px;
+  color: #ddd;
+  font-size: 13px;
+}
+
+.mobile-app-reminder strong {
+  color: #F0C040;
+}
+
+/* Week Days Grid */
+.mobile-app-week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.mobile-app-day-card {
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.mobile-app-day-card.today {
+  background: #1c1c1c;
+  border: 1px solid rgba(240, 192, 64, 0.7);
+  color: #fff;
+}
+
+.mobile-app-day-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+}
+
+.mobile-app-day-number {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Stats Grid */
+.mobile-app-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.mobile-app-stat-card {
+  background: #0c0c0c;
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-app-stat-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.mobile-app-stat-value {
+  font-size: 44px;
+  font-weight: 700;
+  color: #F0C040;
+}
+
+/* Profile Panel */
+.mobile-app-profile-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.mobile-app-profile-title {
+  color: #F0C040;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.mobile-app-profile-section {
+  background: #0c0c0c;
+  border-radius: 22px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-app-profile-section-title {
+  color: #F0C040;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.mobile-app-profile-picture {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mobile-app-profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F0C040, #E8B031);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 3px solid #F0C040;
+}
+
+.mobile-app-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-app-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-app-form-label {
+  color: #aaa;
+  font-size: 12px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.mobile-app-form-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.mobile-app-form-input:focus {
+  outline: none;
+  border-color: #F0C040;
+}
+
+.mobile-app-password-wrapper {
+  position: relative;
+}
+
+.mobile-app-form-input-with-toggle {
+  padding-right: 40px;
+}
+
+.mobile-app-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.mobile-app-btn {
+  background: #F0C040;
+  color: #0c0c0c;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.mobile-app-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 192, 64, 0.3);
+}
+
+.mobile-app-btn-secondary {
+  background: rgba(240, 192, 64, 0.2);
+  color: #F0C040;
+  border: 1px solid #F0C040;
+}
+
+.mobile-app-btn-cancel {
+  background: #1a1a1a;
+  color: #aaa;
+  border: 1px solid #333;
+}
+
+.mobile-app-btn-cancel:hover {
+  background: #222;
+  color: #ccc;
+}
+
+.mobile-app-btn-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.mobile-app-btn-group button {
+  flex: 1;
+}
+
+.mobile-app-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Mobile Bottom Menu */
+.mobile-app-bottom-menu {
+  display: flex;
+  background: #0d0d0d;
+  border-top: 0.5px solid #333;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.mobile-app-bottom-menu-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 0 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.mobile-app-bottom-menu-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: #555;
+}
+
+.mobile-app-bottom-menu-btn.active .mobile-app-bottom-menu-label {
+  color: #F0C040;
+}
+
+/* Notification Page */
+.mobile-app-notification-page {
+  padding: 24px;
+  color: #ddd;
+}
+
+/* Logout Confirmation Modal */
+.mobile-app-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.mobile-app-modal-content {
+  background: #0c0c0c;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(240, 192, 64, 0.3);
+}
+
+.mobile-app-modal-title {
+  color: #F0C040;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.mobile-app-modal-text {
+  color: #aaa;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  line-height: 1.6;
+}
+
+.mobile-app-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-app-modal-actions button {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mobile-app-modal-cancel {
+  background: #1a1a1a;
+  color: #aaa;
+  border: 1px solid #333;
+}
+
+.mobile-app-modal-cancel:hover {
+  background: #222;
+  color: #ccc;
+}
+
+.mobile-app-modal-confirm {
+  background: #F0C040;
+  color: #0c0c0c;
+  border: none;
+}
+
+.mobile-app-modal-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 192, 64, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mobile-app-container {
+    flex-direction: column;
+  }
+
+  .mobile-app-cards-row {
+    flex-direction: column;
+  }
+
+  .mobile-app-stat-card {
+    min-width: 100%;
+  }
+}

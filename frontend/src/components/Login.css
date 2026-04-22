@@ -1,0 +1,245 @@
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.login-modal {
+  position: relative;
+  max-width: 1100px;
+  width: min(1020px, 90vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.login-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #0a0a0a;
+  font-size: 32px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1101;
+  transition: opacity 0.2s ease;
+  line-height: 1;
+}
+
+.login-close:hover {
+  opacity: 0.6;
+}
+
+.login-card {
+  position: relative;
+  display: flex;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  min-height: 420px;
+}
+
+.login-left {
+  flex: 1;
+  background: linear-gradient(120deg, #0a0a0a 0%, #1a1a1a 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 48px;
+}
+
+.login-left h1 {
+  font-size: 40px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #F0C040;
+}
+
+.login-left p {
+  font-size: 18px;
+  opacity: 0.9;
+  color: #fff;
+}
+
+.login-right {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 40px;
+}
+
+.login-brand {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 28px;
+  color: #F0C040;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.login-title {
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 4px;
+  color: #0a0a0a;
+  text-align: center;
+}
+
+.login-subtitle {
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.login-form {
+  width: 100%;
+}
+
+.login-inner {
+  margin-bottom: 32px;
+}
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.login-form-group {
+  margin-bottom: 16px;
+}
+
+.login-form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #0a0a0a;
+}
+
+.login-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  font-family: 'DM Sans', sans-serif;
+  color: #0a0a0a;
+  background: #fff;
+  transition: border 0.2s ease;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #F0C040;
+  box-shadow: 0 0 0 3px rgba(240, 192, 64, 0.1);
+}
+
+.login-forgot {
+  text-align: right;
+  margin-bottom: 18px;
+}
+
+.login-small-link {
+  color: #F0C040;
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-small-link:hover {
+  text-decoration: underline;
+}
+
+.login-error {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(255, 50, 50, 0.12);
+  color: #b02a2a;
+  font-size: 14px;
+}
+
+.login-cta {
+  width: 100%;
+  background: #F0C040;
+  color: #0a0a0a;
+  font-weight: 700;
+  font-size: 17px;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 24px rgba(240, 192, 64, 0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.login-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(240, 192, 64, 0.35);
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 15px;
+  color: #0a0a0a;
+}
+
+.login-link-btn {
+  background: none;
+  border: none;
+  color: #F0C040;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.login-link-btn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .login-card {
+    flex-direction: column;
+  }
+
+  .login-left {
+    padding: 40px 24px;
+  }
+
+  .login-right {
+    padding: 32px 24px;
+  }
+
+  .login-left h1 {
+    font-size: 28px;
+  }
+
+  .login-close {
+    top: 12px;
+  }
+}
