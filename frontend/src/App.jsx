@@ -18,8 +18,6 @@ export default function App() {
       {!user && (
         <LandingPage
           onLoginSuccess={() => {
-            // AuthProvider reads from localStorage automatically on reload
-            // Force re-render by reloading — simple and reliable
             window.location.reload();
           }}
           onAdminLoginSuccess={() => {

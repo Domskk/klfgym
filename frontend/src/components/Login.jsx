@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginUser } from '../services/api'; // NEW API CALL
+import { loginUser } from '../services/api';
 import './Login.css';
 
 function Login({ onClose, onSwitchToSignup, onLoginSuccess }) {

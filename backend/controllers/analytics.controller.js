@@ -116,5 +116,58 @@ const refreshAllAnalytics = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+// GET /analytics/stats
+const getAnalyticsStats = async (req, res) => {
+  try {
+    // Attendance by day of week (last 30 days)
+    const { data: logs } = await supabase
+      .from('attendance_logs')
+      .select('scanned_at')
+      .gte('scanned_at', new Date(Date.now() - 30 * 86400000).toISOString());
 
-module.exports = { getDropoutRisk, getAtRiskMembers, refreshAllAnalytics };
+    const dayCounts = [0,0,0,0,0,0,0]; // Sun-Sat
+    const dayTotals = [0,0,0,0,0,0,0];
+    (logs || []).forEach(l => {
+      dayCounts[new Date(l.scanned_at).getDay()]++;
+    });
+    const maxDay = Math.max(...dayCounts) || 1;
+    const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const attendancePattern = dayLabels.map((label, i) => ({
+      label,
+      pct: Math.round((dayCounts[i] / maxDay) * 100),
+      count: dayCounts[i],
+    }));
+
+    // Sessions per month (last 6 months)
+    const monthLabels = [];
+    const monthCounts = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const label = d.toLocaleDateString('en-US', { month: 'short' });
+      const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+      const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString();
+      const { count } = await supabase
+        .from('attendance_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('scanned_at', start)
+        .lte('scanned_at', end);
+      monthLabels.push(label);
+      monthCounts.push(count || 0);
+    }
+
+    // Total check-ins this week
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const { count: weekSessions } = await supabase
+      .from('attendance_logs')
+      .select('*', { count: 'exact', head: true })
+      .gte('scanned_at', weekStart.toISOString());
+
+    res.json({ attendancePattern, sessionTrend: { labels: monthLabels, counts: monthCounts }, weekSessions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { getDropoutRisk, getAtRiskMembers, refreshAllAnalytics, getAnalyticsStats };

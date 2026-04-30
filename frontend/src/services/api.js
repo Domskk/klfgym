@@ -138,6 +138,13 @@ export const getDropoutRisk = async (userId, token) => {
   return res.json();
 };
 
+export const getAnalyticsStats = async (token) => {
+  const res = await fetch(`${API_URL}/analytics/stats`, {
+    headers: { Authorization: `Bearer ${token}`},
+  });
+  return res.json();
+}
+
 // ── Attendance ────────────────────────────────────────────────────────────────
 export const scanAttendance = async (qrToken, token) => {
   const res = await fetch(`${API_URL}/attendance/scan`, {

@@ -5,23 +5,26 @@ import AnalyticsPanel     from './panels/AnalyticsPanel';
 import TrainersPanel      from './panels/TrainersPanel';
 import AnnouncementsPanel from './panels/AnnouncementsPanel';
 import InventoryPanel     from './panels/InventoryPanel';
-import AddMemberModal     from './AddMemberModal'; 
+import AddMemberModal     from './AddMemberModal';
 import AttendancePanel    from './panels/AttendancePanel';
 
 const NAV = [
-  { id:'dashboard',     label:'Dashboard',     badge:null, title:'Overview Dashboard',        sub:'Tuesday, March 17, 2026',        btn:'+ Add Member',   showAddMember:true,  Component:DashboardPanel,     iconPath:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' },
-  { id:'analytics',     label:'Analytics',     badge:'AI', title:'Analytics & Insights',      sub:'AI-powered predictive analytics', btn:'Export Report',  showAddMember:false, Component:AnalyticsPanel,     iconPath:'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z' },
-  { id:'trainers',      label:'Trainers',      badge:null, title:'Trainer Management',         sub:'Add, edit, or remove coaches',   btn:'+ Add Trainer',  showAddMember:false, Component:TrainersPanel,      iconPath:'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z' },
-  { id:'announcements', label:'Announcements', badge:'3',  title:'Announcements',              sub:'Notify all gym members',          btn:'+ New Post',     showAddMember:false, Component:AnnouncementsPanel, iconPath:'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z' },
-  { id:'inventory',     label:'Inventory',     badge:null, title:'Inventory Management',       sub:'Track gym equipment and supplies', btn:'+ Add Item',    showAddMember:false, Component:InventoryPanel,     iconPath:'M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-8 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm2-9h-4V5h4v2z' },
-  { id:'attendance', label:'Attendance', badge:null, title:'Attendance Scanner', sub:'Scan member QR codes', btn:'↻ Refresh', showAddMember:false, Component:AttendancePanel,
-  iconPath:'M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z' },
+  { id:'dashboard',     label:'Dashboard',     badge:null, title:'Overview Dashboard',         sub:'Tuesday, March 17, 2026',         btn:'+ Add Member',  showAddMember:true,  Component:DashboardPanel,     iconPath:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' },
+  { id:'analytics',     label:'Analytics',     badge:'AI', title:'Analytics & Insights',       sub:'AI-powered predictive analytics',  btn:'Export Report', showAddMember:false, Component:AnalyticsPanel,     iconPath:'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z' },
+  { id:'trainers',      label:'Trainers',      badge:null, title:'Trainer Management',          sub:'Add, edit, or remove coaches',    btn:'+ Add Trainer', showAddMember:false, Component:TrainersPanel,      iconPath:'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z' },
+  { id:'announcements', label:'Announcements', badge:'3',  title:'Announcements',               sub:'Notify all gym members',           btn:'+ New Post',    showAddMember:false, Component:AnnouncementsPanel, iconPath:'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z' },
+  { id:'inventory',     label:'Inventory',     badge:null, title:'Inventory Management',        sub:'Track gym equipment and supplies', btn:'+ Add Item',    showAddMember:false, Component:InventoryPanel,     iconPath:'M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-8 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm2-9h-4V5h4v2z' },
+  { id:'attendance',    label:'Attendance',    badge:null, title:'Attendance Scanner',          sub:'Scan member QR codes',             btn:'↻ Refresh',     showAddMember:false, Component:AttendancePanel,
+    iconPath:'M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z' },
 ];
 
 function SidebarItem({ item, active, onClick }) {
   const [hov, setHov] = useState(false);
   return (
-    <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 16px', cursor: 'pointer',
@@ -29,7 +32,8 @@ function SidebarItem({ item, active, onClick }) {
         border: 'none', borderLeft: `2px solid ${active ? C.gold : 'transparent'}`,
         color: active ? C.gold : hov ? C.textSecondary : '#666',
         fontSize: 13, fontFamily: T.body, textAlign: 'left', transition: 'all 0.15s',
-      }}>
+      }}
+    >
       <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d={item.iconPath} /></svg>
       {item.label}
       {item.badge && (
@@ -43,9 +47,14 @@ function SidebarItem({ item, active, onClick }) {
 }
 
 export default function AdminDashboard({ onLogout }) {
-  const [activeId, setActiveId]         = useState('dashboard');
-  const [time, setTime]                 = useState('--:--');
-  const [showAddMember, setShowAddMember] = useState(false); // ← NEW
+  const [activeId,       setActiveId]       = useState('dashboard');
+  const [time,           setTime]           = useState('--:--');
+  const [showAddMember,  setShowAddMember]  = useState(false);
+
+  // ── Refresh counter — increment to trigger re-fetch in any panel ──────────
+  const [refreshKey, setRefreshKey] = useState(0);
+  const triggerRefresh = () => setRefreshKey(k => k + 1);
+
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -61,13 +70,18 @@ export default function AdminDashboard({ onLogout }) {
   const panel = NAV.find(p => p.id === activeId);
   const Comp  = panel.Component;
 
-  // ── header button handler ──────────────────────────────────────────────────
   const handleHeaderBtn = () => {
     if (panel.showAddMember) {
-      setShowAddMember(true); // open modal on Dashboard panel
+      setShowAddMember(true);
     } else {
-      alert(panel.btn);       // placeholder for other panels
+      alert(panel.btn);
     }
+  };
+
+  // Called when AddMemberModal succeeds — close modal + refresh panel
+  const handleMemberSuccess = () => {
+    setShowAddMember(false);
+    triggerRefresh();
   };
 
   return (
@@ -84,9 +98,13 @@ export default function AdminDashboard({ onLogout }) {
         </div>
         <nav style={{ flex: 1, padding: '12px 0' }}>
           <div style={{ color: '#333', fontSize: 10, letterSpacing: 1.5, padding: '8px 16px 4px' }}>MAIN</div>
-          {NAV.slice(0, 2).map(p => <SidebarItem key={p.id} item={p} active={activeId === p.id} onClick={() => setActiveId(p.id)} />)}
+          {NAV.slice(0, 2).map(p => (
+            <SidebarItem key={p.id} item={p} active={activeId === p.id} onClick={() => setActiveId(p.id)} />
+          ))}
           <div style={{ color: '#333', fontSize: 10, letterSpacing: 1.5, padding: '12px 16px 4px' }}>MANAGEMENT</div>
-          {NAV.slice(2).map(p => <SidebarItem key={p.id} item={p} active={activeId === p.id} onClick={() => setActiveId(p.id)} />)}
+          {NAV.slice(2).map(p => (
+            <SidebarItem key={p.id} item={p} active={activeId === p.id} onClick={() => setActiveId(p.id)} />
+          ))}
         </nav>
         <div style={{ padding: '12px 16px', borderTop: `0.5px solid ${C.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -106,6 +124,7 @@ export default function AdminDashboard({ onLogout }) {
 
       {/* ── Main ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
         {/* Top Nav */}
         <div style={{
           background: C.bgPrimary, borderBottom: `0.5px solid ${C.border}`,
@@ -129,8 +148,6 @@ export default function AdminDashboard({ onLogout }) {
               </svg>
               <div style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, background: C.gold, borderRadius: '50%' }} />
             </div>
-
-            {/* ← This now opens AddMemberModal on the Dashboard panel */}
             <button
               onClick={handleHeaderBtn}
               style={{
@@ -139,7 +156,6 @@ export default function AdminDashboard({ onLogout }) {
                 border: 'none', cursor: 'pointer', fontFamily: T.body,
               }}
             >{panel.btn}</button>
-
             <button
               onClick={onLogout}
               style={{
@@ -151,9 +167,13 @@ export default function AdminDashboard({ onLogout }) {
           </div>
         </div>
 
-        {/* Panel content */}
+        {/* Panel content — refreshKey forces re-mount/re-fetch when incremented */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-          <Comp token={token} onAddMember={() => setShowAddMember(true)} />
+          <Comp
+            token={token}
+            refreshKey={refreshKey}
+            onAddMember={() => setShowAddMember(true)}
+          />
         </div>
       </div>
 
@@ -161,10 +181,7 @@ export default function AdminDashboard({ onLogout }) {
       {showAddMember && (
         <AddMemberModal
           onClose={() => setShowAddMember(false)}
-          onSuccess={() => {
-            // Optional: trigger a refresh of the member list in DashboardPanel
-            setShowAddMember(false);
-          }}
+          onSuccess={handleMemberSuccess}
         />
       )}
     </div>

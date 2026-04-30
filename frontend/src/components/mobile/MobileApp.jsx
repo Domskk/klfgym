@@ -1,11 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { C, T } from '../../theme';
-import TrainersTab  from './tabs/TrainersTab';
-import ClassesTab   from './tabs/ClassesTab';
-import ReportTab    from './tabs/ReportTab';
-import QRCodeTab    from './tabs/QrcodeTab'; // ← NEW
-import './MobileApp.css'; 
-import { API_URL, getAnnouncements } from '../../services/api';  
+import TrainersTab from './tabs/TrainersTab';
+import ClassesTab  from './tabs/ClassesTab';
+import ReportTab   from './tabs/ReportTab';
+import QRCodeTab   from './tabs/QrcodeTab';
+import './MobileApp.css';
+import { API_URL, getAnnouncements } from '../../services/api';
 
 const MENU = [
   {
@@ -17,7 +17,7 @@ const MENU = [
     ),
   },
   {
-    id: 'qr', label: 'My QR',   // ← NEW TAB
+    id: 'qr', label: 'My QR',
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? '#F0C040' : '#777'}>
         <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm-2 4h2v2h-2zm2 0h2v2h-2zm2-4h2v2h-2z"/>
@@ -50,7 +50,10 @@ const MENU = [
   },
 ];
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// Tabs that require an active membership
+const MEMBERSHIP_GATED_TABS = ['qr', 'trainers'];
+
+// helpers
 function formatTime(date) {
   return `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
 }
@@ -59,78 +62,118 @@ function formatDayLabel(date) {
 }
 function getWeekDays() {
   const today = new Date();
-  const diff  = today.getDay();
-  const start = new Date(today); start.setDate(today.getDate() - diff);
-  return Array.from({ length:7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate()+i); return d; });
+  const start = new Date(today);
+  start.setDate(today.getDate() - today.getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start); d.setDate(start.getDate() + i); return d;
+  });
+}
+
+// Locked screen
+function LockedScreen({ tabLabel, membershipStatus }) {
+  const messages = {
+    no_membership: {
+      icon: '🔒', title: 'Membership Required',
+      body: "You don't have an active membership yet. Visit the front desk to avail a plan and unlock all features.",
+    },
+    expired: {
+      icon: '⏰', title: 'Membership Expired',
+      body: 'Your membership has expired. Please renew at the front desk to regain access.',
+    },
+    cancelled: {
+      icon: '❌', title: 'Membership Cancelled',
+      body: 'Your membership has been cancelled. Please visit the front desk for assistance.',
+    },
+  };
+  const msg = messages[membershipStatus] || messages.no_membership;
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', height: '100%',
+      padding: '32px 24px', textAlign: 'center', gap: 16,
+    }}>
+      <div style={{ fontSize: 48 }}>{msg.icon}</div>
+      <div style={{ color: '#F0C040', fontSize: 16, fontWeight: 700 }}>{msg.title}</div>
+      <div style={{ color: '#666', fontSize: 13, lineHeight: 1.7, maxWidth: 280 }}>{msg.body}</div>
+      <div style={{
+        marginTop: 8, background: 'rgba(240,192,64,0.07)',
+        border: '1px solid rgba(240,192,64,0.2)',
+        borderRadius: 10, padding: '12px 16px',
+        color: '#888', fontSize: 12, lineHeight: 1.6,
+      }}>
+        Once your membership is activated by an admin,{' '}
+        <span style={{ color: '#F0C040' }}>{tabLabel}</span> will be available automatically.
+      </div>
+    </div>
+  );
 }
 
 export default function MobileApp({ onLogout }) {
-  const [active, setActive]               = useState('home');
-  const [isMobile, setIsMobile]           = useState(false);
-  const [now, setNow]                     = useState(new Date());
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [profileData, setProfileData]     = useState({
-    name: 'Alex Santos',
-    email: 'alex@example.com',
-    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-  });
-  const [membership, setMembership] = useState({ plan: '', expires: null, });
-  const [announcements, setAnnouncements] = useState([]);
+  const [active,             setActive]             = useState('home');
+  const [isMobile,           setIsMobile]           = useState(false);
+  const [now,                setNow]                = useState(new Date());
+  const [showLogoutConfirm,  setShowLogoutConfirm]  = useState(false);
+  const [announcements,      setAnnouncements]      = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
 
-useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      const token = localStorage.getItem('token');
+  const [profileData, setProfileData] = useState({
+    name:         'Member',
+    email:        '',
+    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Member',
+  });
+  const [membership, setMembership] = useState({
+    plan:    '',
+    expires: null,
+    status:  'no_membership', // 'active' | 'expired' | 'cancelled' | 'no_membership'
+  });
 
-      const res = await fetch(`${API_URL}/users/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  // Fetch profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res   = await fetch(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
 
-      const data = await res.json();
+        setProfileData({
+          name:         data.full_name || 'Member',
+          email:        data.email     || '',
+          profileImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.full_name}`,
+        });
+        setMembership({
+          plan:    data.membership_plan   || '',
+          expires: data.membership_end    ? new Date(data.membership_end) : null,
+          status:  data.membership_status || 'no_membership',
+        });
+      } catch (err) {
+        console.error('Profile fetch error:', err);
+      }
+    };
+    fetchProfile();
+  }, []);
 
-      if (!res.ok) throw new Error(data.error);
-
-      setProfileData({
-        name: data.full_name,
-        email: data.email,
-        profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + data.full_name,
-      });
-
-      setMembership({
-        plan: data.membership_plan || 'Standard Plan',
-        expires: data.membership_end ? new Date(data.membership_end) : null,
-      });
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  fetchProfile();
-}, []);
-
+  // Fetch announcements
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
         const data = await getAnnouncements();
         setAnnouncements(Array.isArray(data) ? data : []);
-      }catch (err) {
+      } catch (err) {
         console.error('Failed to load announcements:', err);
         setAnnouncements([]);
-      }finally {
+      } finally {
         setLoadingNotifications(false);
       }
     };
     fetchAnnouncements();
   }, []);
 
-  const daysLeft = membership.expires
-  ? Math.max(0, Math.ceil((membership.expires - now) / (1000*60*60*24)))
-  : 0;
-
+  // Clock + responsive
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 700px)');
+    const mq     = window.matchMedia('(max-width: 700px)');
     const update = () => setIsMobile(mq.matches);
     update();
     mq.addEventListener?.('change', update);
@@ -138,10 +181,15 @@ useEffect(() => {
     return () => { clearInterval(interval); mq.removeEventListener?.('change', update); };
   }, []);
 
+  const membershipActive = membership.status === 'active';
+  const daysLeft = membership.expires
+    ? Math.max(0, Math.ceil((membership.expires - now) / (1000 * 60 * 60 * 24)))
+    : 0;
+
   const weekDays   = useMemo(() => getWeekDays(), []);
   const todayIndex = now.getDay();
 
-  // ── Sidebar (desktop) ──────────────────────────────────────────────────────
+  // Sidebar
   const Sidebar = () => (
     <div className="mobile-app-sidebar">
       <div>
@@ -149,10 +197,15 @@ useEffect(() => {
         <div className="mobile-app-menu">
           {MENU.map(({ id, label, icon }) => {
             const isActive = id === active;
+            const isLocked = MEMBERSHIP_GATED_TABS.includes(id) && !membershipActive;
             return (
               <button key={id} type="button" onClick={() => setActive(id)}
-                className={`mobile-app-menu-btn ${isActive ? 'active' : ''}`}>
-                {icon(isActive)}<span>{label}</span>
+                className={`mobile-app-menu-btn ${isActive ? 'active' : ''}`}
+                style={{ opacity: isLocked ? 0.5 : 1 }}
+              >
+                {icon(isActive)}
+                <span>{label}</span>
+                {isLocked && <span style={{ marginLeft: 'auto', fontSize: 10 }}>🔒</span>}
               </button>
             );
           })}
@@ -167,14 +220,17 @@ useEffect(() => {
     </div>
   );
 
-  // ── Dashboard ──────────────────────────────────────────────────────────────
+  // Dashboard 
   const Dashboard = () => (
     <div className="mobile-app-dashboard">
       <div className="mobile-app-cards-row">
         <div className="mobile-app-card">
           <div className="mobile-app-card-header">
             <div>
-              <div className="mobile-app-card-title">Good Morning, {profileData.name.split(' ')[0]}! 👋</div>
+              <div className="mobile-app-card-title">
+                Good {now.getHours() < 12 ? 'Morning' : now.getHours() < 18 ? 'Afternoon' : 'Evening'},{' '}
+                {profileData.name.split(' ')[0]}! 👋
+              </div>
               <div className="mobile-app-card-subtitle">{formatDayLabel(now)}</div>
             </div>
             <div className="mobile-app-card-time">
@@ -188,57 +244,85 @@ useEffect(() => {
         <div className="mobile-app-card">
           <div className="mobile-app-card-header">
             <div>
-              <div className="mobile-app-membership-header">ACTIVE PLAN</div>
-              <div className="mobile-app-membership-plan">{membership.plan}</div>
-              <div className="mobile-app-membership-name">{membership.name}</div>
-            </div>
-            <div className="mobile-app-membership-info-right">
-              <div className="mobile-app-membership-days">{daysLeft} days left</div>
-              <div className="mobile-app-membership-expires">
-                Expires {membership.expires ? membership.expires.toLocaleDateString(undefined, { month:'long', day:'numeric', year:'numeric' }) : 'N/A'}
+              <div className="mobile-app-membership-header">
+                {membershipActive ? 'ACTIVE PLAN' : 'NO MEMBERSHIP'}
+              </div>
+              <div className="mobile-app-membership-plan">
+                {membership.plan || 'No plan yet'}
               </div>
             </div>
+            <div className="mobile-app-membership-info-right">
+              {membershipActive ? (
+                <>
+                  <div className="mobile-app-membership-days">{daysLeft} days left</div>
+                  <div className="mobile-app-membership-expires">
+                    Expires {membership.expires.toLocaleDateString(undefined, { month:'long', day:'numeric', year:'numeric' })}
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: '#ef4444', fontSize: 11 }}>
+                  {membership.status === 'expired'   ? 'Expired'   :
+                   membership.status === 'cancelled' ? 'Cancelled' : 'Not activated'}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="mobile-app-progress-bar">
-            <div className="mobile-app-progress-fill"
-              style={{ width:`${Math.max(0, Math.min(100, 100-(daysLeft/30)*100))}%` }} />
-          </div>
+          {membershipActive && (
+            <div className="mobile-app-progress-bar">
+              <div className="mobile-app-progress-fill"
+                style={{ width: `${Math.max(0, Math.min(100, 100 - (daysLeft / 30) * 100))}%` }} />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* QR shortcut banner */}
-      <button
-        onClick={() => setActive('qr')}
-        style={{
-          width: '100%', background: 'rgba(240,192,64,0.07)',
-          border: '1px solid rgba(240,192,64,0.25)', borderRadius: 10,
-          padding: '12px 16px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
-        }}
-      >
+      {/* QR shortcut — only if membership active */}
+      {membershipActive ? (
+        <button
+          onClick={() => setActive('qr')}
+          style={{
+            width: '100%', background: 'rgba(240,192,64,0.07)',
+            border: '1px solid rgba(240,192,64,0.25)', borderRadius: 10,
+            padding: '12px 16px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+          }}
+        >
+          <div style={{
+            width: 36, height: 36, background: 'rgba(240,192,64,0.12)',
+            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#F0C040">
+              <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4z"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ color: '#F0C040', fontSize: 13, fontWeight: 600 }}>Show My QR Code</div>
+            <div style={{ color: '#666', fontSize: 11, marginTop: 1 }}>Tap to check in at the gym entrance</div>
+          </div>
+          <div style={{ marginLeft: 'auto', color: '#444', fontSize: 18 }}>›</div>
+        </button>
+      ) : (
         <div style={{
-          width: 36, height: 36, background: 'rgba(240,192,64,0.12)',
-          borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100%', background: 'rgba(239,68,68,0.07)',
+          border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10,
+          padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#F0C040">
-            <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4z"/>
-          </svg>
-        </div>
-        <div>
-          <div style={{ color: '#F0C040', fontSize: 13, fontWeight: 600 }}>Show My QR Code</div>
-          <div style={{ color: '#666', fontSize: 11, marginTop: 1 }}>Tap to check in at the gym entrance</div>
-        </div>
-        <div style={{ marginLeft: 'auto', color: '#444', fontSize: 18 }}>›</div>
-      </button>
-
-      <div className="mobile-app-reminder">
-        {membership.expires && (
-          <div className="mobile-app-reminder">
-            <strong>Reminder:</strong> Membership expires{' '}
-            {membership.expires.toLocaleDateString(undefined, { month:'long', day:'numeric', year:'numeric' })}. Renew now!
+          <div style={{ fontSize: 24 }}>🔒</div>
+          <div>
+            <div style={{ color: '#ef4444', fontSize: 13, fontWeight: 600 }}>QR Code Unavailable</div>
+            <div style={{ color: '#666', fontSize: 11, marginTop: 1 }}>
+              Avail a membership plan at the front desk to unlock check-in.
+            </div>
           </div>
-        )}      
-      </div>
+        </div>
+      )}
+
+      {/* Expiry reminder */}
+      {membershipActive && daysLeft <= 7 && (
+        <div className="mobile-app-reminder">
+          <strong>Reminder:</strong> Membership expires in {daysLeft} day{daysLeft !== 1 ? 's' : ''}. Renew now!
+        </div>
+      )}
 
       <div className="mobile-app-week-grid">
         {weekDays.map((day, index) => (
@@ -252,26 +336,26 @@ useEffect(() => {
       <div className="mobile-app-stats-grid">
         <div className="mobile-app-stat-card">
           <div className="mobile-app-stat-label">Sessions This Month</div>
-          <div className="mobile-app-stat-value">12</div>
+          <div className="mobile-app-stat-value">—</div>
         </div>
         <div className="mobile-app-stat-card">
           <div className="mobile-app-stat-label">Upcoming Classes</div>
-          <div className="mobile-app-stat-value">3</div>
+          <div className="mobile-app-stat-value">—</div>
         </div>
       </div>
     </div>
   );
 
-  // ── Profile panel (unchanged) ──────────────────────────────────────────────
+  // Profile panel
   const ProfilePanel = ({ profileData, setProfileData }) => {
-    const [editedData, setEditedData] = useState(profileData);
+    const [editedData,       setEditedData]       = useState(profileData);
     const [showPasswordForm, setShowPasswordForm] = useState(false);
-    const [passwordData, setPasswordData] = useState({ currentPassword:'', newPassword:'', confirmPassword:'' });
-    const [showPwFields, setShowPwFields] = useState({ current:false, new:false, confirm:false });
+    const [passwordData,     setPasswordData]     = useState({ currentPassword:'', newPassword:'', confirmPassword:'' });
+    const [showPwFields,     setShowPwFields]     = useState({ current:false, new:false, confirm:false });
 
     useEffect(() => { setEditedData(profileData); }, [profileData]);
 
-    const handleSave = () => { setProfileData(editedData); alert('Profile updated!'); };
+    const handleSave     = () => { setProfileData(editedData); alert('Profile updated!'); };
     const handlePwChange = () => {
       if (passwordData.newPassword !== passwordData.confirmPassword) { alert('Passwords do not match!'); return; }
       if (passwordData.newPassword.length < 6) { alert('Min 6 characters.'); return; }
@@ -283,6 +367,24 @@ useEffect(() => {
     return (
       <div className="mobile-app-profile-panel">
         <h1 className="mobile-app-profile-title">Profile Settings</h1>
+
+        {/* Membership status banner */}
+        {!membershipActive && (
+          <div style={{
+            background: 'rgba(240,192,64,0.07)', border: '1px solid rgba(240,192,64,0.2)',
+            borderRadius: 10, padding: '12px 14px', marginBottom: 16,
+          }}>
+            <div style={{ color: '#F0C040', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+              {membership.status === 'no_membership' ? '⚠️ No Active Membership' :
+               membership.status === 'expired'       ? '⏰ Membership Expired'   :
+               '❌ Membership Cancelled'}
+            </div>
+            <div style={{ color: '#666', fontSize: 11 }}>
+              Visit the front desk to avail or renew a membership plan.
+            </div>
+          </div>
+        )}
+
         <div className="mobile-app-profile-section mobile-app-profile-picture">
           <div className="mobile-app-profile-avatar">
             <img src={editedData.profileImage} alt="Profile" />
@@ -299,33 +401,44 @@ useEffect(() => {
             Change Picture
           </button>
         </div>
+
         <div className="mobile-app-profile-section">
           <h2 className="mobile-app-profile-section-title">Personal Information</h2>
           <div className="mobile-app-form-group">
             <label className="mobile-app-form-label">Full Name</label>
-            <input type="text" value={editedData.name} onChange={e => setEditedData({...editedData,name:e.target.value})} className="mobile-app-form-input"/>
+            <input type="text" value={editedData.name}
+              onChange={e => setEditedData({ ...editedData, name: e.target.value })}
+              className="mobile-app-form-input"/>
           </div>
           <div className="mobile-app-form-group">
             <label className="mobile-app-form-label">Email</label>
-            <input type="email" value={editedData.email} onChange={e => setEditedData({...editedData,email:e.target.value})} className="mobile-app-form-input"/>
+            <input type="email" value={editedData.email}
+              onChange={e => setEditedData({ ...editedData, email: e.target.value })}
+              className="mobile-app-form-input"/>
           </div>
           <button onClick={handleSave} className="mobile-app-btn">Save Changes</button>
         </div>
+
         <div className="mobile-app-profile-section">
           <h2 className="mobile-app-profile-section-title">Security</h2>
           {!showPasswordForm ? (
-            <button onClick={() => setShowPasswordForm(true)} className="mobile-app-btn mobile-app-btn-secondary">Change Password</button>
+            <button onClick={() => setShowPasswordForm(true)} className="mobile-app-btn mobile-app-btn-secondary">
+              Change Password
+            </button>
           ) : (
             <div className="mobile-app-password-form">
               {['current','new','confirm'].map(key => (
                 <div key={key} className="mobile-app-form-group">
-                  <label className="mobile-app-form-label">{key === 'current' ? 'Current' : key === 'new' ? 'New' : 'Confirm'} Password</label>
+                  <label className="mobile-app-form-label">
+                    {key === 'current' ? 'Current' : key === 'new' ? 'New' : 'Confirm'} Password
+                  </label>
                   <div className="mobile-app-password-wrapper">
                     <input type={showPwFields[key] ? 'text' : 'password'}
                       value={passwordData[`${key}Password`]}
-                      onChange={e => setPasswordData({...passwordData,[`${key}Password`]:e.target.value})}
+                      onChange={e => setPasswordData({ ...passwordData, [`${key}Password`]: e.target.value })}
                       className="mobile-app-form-input mobile-app-form-input-with-toggle"/>
-                    <button onClick={() => setShowPwFields({...showPwFields,[key]:!showPwFields[key]})} className="mobile-app-password-toggle">
+                    <button onClick={() => setShowPwFields({ ...showPwFields, [key]: !showPwFields[key] })}
+                      className="mobile-app-password-toggle">
                       {showPwFields[key] ? '👁️' : '👁️‍🗨️'}
                     </button>
                   </div>
@@ -342,49 +455,26 @@ useEffect(() => {
     );
   };
 
-  // ── Logout modal ───────────────────────────────────────────────────────────
-  const LogoutModal = () => (
-    <div className="mobile-app-modal-overlay">
-      <div className="mobile-app-modal-content">
-        <h2 className="mobile-app-modal-title">Confirm Logout</h2>
-        <p className="mobile-app-modal-text">Are you sure you want to logout?</p>
-        <div className="mobile-app-modal-actions">
-          <button onClick={() => setShowLogoutConfirm(false)} className="mobile-app-modal-cancel">Cancel</button>
-          <button onClick={() => { setShowLogoutConfirm(false); onLogout?.(); setActive('home'); }} className="mobile-app-modal-confirm">
-            Logout
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
+  // Notifications tab
   const NotificationsTab = () => (
     <div style={{ padding: '20px', color: '#fff' }}>
       <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Notifications & Announcements</div>
-
       {loadingNotifications ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#666' }}>Loading announcements...</div>
       ) : announcements.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {announcements.map((ann) => (
-            <div
-              key={ann.id}
-              style={{
-                background: '#1a1a1a',
-                borderRadius: 12,
-                padding: '16px',
-                borderLeft: '4px solid #F0C040',
-              }}
-            >
+          {announcements.map(ann => (
+            <div key={ann.id} style={{
+              background: '#1a1a1a', borderRadius: 12,
+              padding: '16px', borderLeft: '4px solid #F0C040',
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ fontWeight: 600, fontSize: 15 }}>{ann.title}</div>
                 <div style={{ fontSize: 11, color: '#888' }}>
                   {new Date(ann.created_at).toLocaleDateString()}
                 </div>
               </div>
-              <div style={{ marginTop: 8, color: '#ccc', lineHeight: 1.5, fontSize: 14 }}>
-                {ann.body}
-              </div>
+              <div style={{ marginTop: 8, color: '#ccc', lineHeight: 1.5, fontSize: 14 }}>{ann.body}</div>
               {ann.start_date && ann.end_date && (
                 <div style={{ marginTop: 10, fontSize: 12, color: '#666' }}>
                   Valid: {new Date(ann.start_date).toLocaleDateString()} — {new Date(ann.end_date).toLocaleDateString()}
@@ -401,10 +491,31 @@ useEffect(() => {
     </div>
   );
 
-  // ── Render active tab ──────────────────────────────────────────────────────
+  // Logout modal
+  const LogoutModal = () => (
+    <div className="mobile-app-modal-overlay">
+      <div className="mobile-app-modal-content">
+        <h2 className="mobile-app-modal-title">Confirm Logout</h2>
+        <p className="mobile-app-modal-text">Are you sure you want to logout?</p>
+        <div className="mobile-app-modal-actions">
+          <button onClick={() => setShowLogoutConfirm(false)} className="mobile-app-modal-cancel">Cancel</button>
+          <button onClick={() => { setShowLogoutConfirm(false); onLogout?.(); setActive('home'); }}
+            className="mobile-app-modal-confirm">Logout</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render active tab
   const renderContent = () => {
+    // Gate membership-required tabs
+    if (MEMBERSHIP_GATED_TABS.includes(active) && !membershipActive) {
+      const tabLabel = MENU.find(m => m.id === active)?.label || active;
+      return <LockedScreen tabLabel={tabLabel} membershipStatus={membership.status} />;
+    }
+
     if (active === 'home')         return <Dashboard />;
-    if (active === 'qr')           return <QRCodeTab />;         
+    if (active === 'qr')           return <QRCodeTab />;
     if (active === 'trainers')     return <TrainersTab />;
     if (active === 'classes')      return <ClassesTab />;
     if (active === 'report')       return <ReportTab />;
@@ -424,13 +535,21 @@ useEffect(() => {
           </div>
           {isMobile && (
             <div className="mobile-app-bottom-menu">
-              {MENU.map(({ id, label, icon }) => (
-                <button key={id} onClick={() => setActive(id)}
-                  className={`mobile-app-bottom-menu-btn ${active === id ? 'active' : ''}`}>
-                  {icon(active === id)}
-                  <span className="mobile-app-bottom-menu-label">{label}</span>
-                </button>
-              ))}
+              {MENU.map(({ id, label, icon }) => {
+                const isLocked = MEMBERSHIP_GATED_TABS.includes(id) && !membershipActive;
+                return (
+                  <button key={id} onClick={() => setActive(id)}
+                    className={`mobile-app-bottom-menu-btn ${active === id ? 'active' : ''}`}
+                    style={{ opacity: isLocked ? 0.5 : 1, position: 'relative' }}
+                  >
+                    {icon(active === id)}
+                    <span className="mobile-app-bottom-menu-label">{label}</span>
+                    {isLocked && (
+                      <span style={{ position: 'absolute', top: 2, right: 6, fontSize: 8, color: '#F0C040' }}>🔒</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

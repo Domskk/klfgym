@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     initAuth();
-  }, []);
+  }, []);   
 
   const initAuth = () => {
     try {

@@ -11,7 +11,7 @@ app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json());
 
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
-
+    
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/attendance', require('./routes/attendance.routes'));

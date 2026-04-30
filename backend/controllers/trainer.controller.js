@@ -94,4 +94,6 @@ const deleteTrainer = async (req, res) => {
   }
 };
 
+
+
 module.exports = { getAllTrainers, addTrainer, deleteTrainer };
