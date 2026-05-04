@@ -201,11 +201,17 @@ export const getTrainerBookings = async (trainerId, token) => {
   return res.json();
 };
 
-export const updateBookingStatus = async (bookingId, status, token) => {
+export const updateBookingStatus = async (bookingId, status, token, cancelReason = null) => {
   const res = await fetch(`${API_URL}/bookings/${bookingId}/status`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ status }),
+    headers: { 
+      "Content-Type": "application/json", 
+      Authorization: `Bearer ${token}` 
+    },
+    body: JSON.stringify({ 
+      status,
+      ...(cancelReason && { cancel_reason: cancelReason })
+    }),
   });
   return res.json();
 };

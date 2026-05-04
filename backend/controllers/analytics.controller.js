@@ -58,7 +58,9 @@ const getAtRiskMembers = async (req, res) => {
           full_name,
           email,
           membership_end,
-          is_active
+          is_active,
+          membership_plan,
+          membership_start
         )
       `)
       .in('risk_level', ['Medium', 'High'])
@@ -68,9 +70,14 @@ const getAtRiskMembers = async (req, res) => {
 
     const atRisk = (data ?? []).map(row => {
       const user = row.users || {};
-      const isCanceled = user.is_active === false;
+      
+      // ── NEW FILTER: Only members with actual membership plan ──
+      if (!user.membership_plan || !user.membership_start) {
+        return null; // Skip users who only signed up but never purchased membership
+      }
 
-      let explanation = row.primary_reason 
+      const isCanceled = user.is_active === false;
+      let explanation = row.primary_reason
         ? `Low attendance + reported "${row.primary_reason.replace(/_/g, ' ')}"`
         : 'Low attendance frequency';
 
@@ -90,7 +97,7 @@ const getAtRiskMembers = async (req, res) => {
         lastVisitGapDays: row.last_visit_gap_days,
         isCanceled,
       };
-    });
+    }).filter(Boolean); // Remove null entries
 
     res.json(atRisk);
   } catch (err) {
@@ -119,44 +126,68 @@ const refreshAllAnalytics = async (req, res) => {
 // GET /analytics/stats
 const getAnalyticsStats = async (req, res) => {
   try {
-    // Attendance by day of week (last 30 days)
+    // === Membership Stats ===
+    const { count: totalRegistered, error: err1 } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'member');
+
+    const { count: activeMembers, error: err2 } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'member')
+      .eq('is_active', true);
+
+    const { count: expiredMembers, error: err3 } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'member')
+      .lt('membership_end', new Date().toISOString())
+      .eq('is_active', true);
+
+    const { count: monthlyMembers, error: err4 } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'member')
+      .eq('membership_plan', 'monthly')
+      .eq('is_active', true);
+
+    const { count: quarterlyMembers, error: err5 } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'member')
+      .eq('membership_plan', 'quarterly')
+      .eq('is_active', true);
+
+    // === Trainer Stats ===
+    const { count: totalTrainers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'trainer');
+
+    // === Attendance Pattern (Last 30 Days) ===
     const { data: logs } = await supabase
       .from('attendance_logs')
       .select('scanned_at')
       .gte('scanned_at', new Date(Date.now() - 30 * 86400000).toISOString());
 
-    const dayCounts = [0,0,0,0,0,0,0]; // Sun-Sat
-    const dayTotals = [0,0,0,0,0,0,0];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0]; // Index 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
     (logs || []).forEach(l => {
-      dayCounts[new Date(l.scanned_at).getDay()]++;
+      const dayIndex = new Date(l.scanned_at).getDay();
+      dayCounts[dayIndex]++;
     });
-    const maxDay = Math.max(...dayCounts) || 1;
-    const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    const maxCount = Math.max(...dayCounts) || 1;
+
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const attendancePattern = dayLabels.map((label, i) => ({
       label,
-      pct: Math.round((dayCounts[i] / maxDay) * 100),
       count: dayCounts[i],
+      pct: Math.round((dayCounts[i] / maxCount) * 100)
     }));
 
-    // Sessions per month (last 6 months)
-    const monthLabels = [];
-    const monthCounts = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const label = d.toLocaleDateString('en-US', { month: 'short' });
-      const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
-      const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString();
-      const { count } = await supabase
-        .from('attendance_logs')
-        .select('*', { count: 'exact', head: true })
-        .gte('scanned_at', start)
-        .lte('scanned_at', end);
-      monthLabels.push(label);
-      monthCounts.push(count || 0);
-    }
-
-    // Total check-ins this week
+    // Week Sessions
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
     const { count: weekSessions } = await supabase
@@ -164,8 +195,20 @@ const getAnalyticsStats = async (req, res) => {
       .select('*', { count: 'exact', head: true })
       .gte('scanned_at', weekStart.toISOString());
 
-    res.json({ attendancePattern, sessionTrend: { labels: monthLabels, counts: monthCounts }, weekSessions });
+    res.json({
+      active_members: activeMembers || 0,
+      total_registered: totalRegistered || 0,
+      total_members: (activeMembers || 0) + (expiredMembers || 0),
+      monthly_members: monthlyMembers || 0,
+      quarterly_members: quarterlyMembers || 0,
+      expired_members: expiredMembers || 0,
+      total_trainers: totalTrainers || 0,
+      week_sessions: weekSessions || 0,
+      attendancePattern,
+    });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
