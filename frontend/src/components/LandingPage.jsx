@@ -4,6 +4,13 @@ import Header from './Header';
 import Signup from './Signup';
 import Login from './Login';
 import AdminLogin from './AdminLogin';
+import heroBg from '../assets/GYM4.jpg';
+import gym1 from '../assets/GYM1.jpg';
+import gym2 from '../assets/GYM2.jpg';
+import gym3 from '../assets/GYM3.jpg';
+import gym4 from '../assets/GYM4.jpg';
+import gym5 from '../assets/GYM5.jpg';
+import gym6 from '../assets/GYM6.jpg';
 
 const TRAINERS = [
   { name: 'Marco Cruz',  specialty: 'Strength Training Coach',        initials: 'MC' },
@@ -20,7 +27,7 @@ const PLANS = [
 ];
 
 const STATS = [
-  { value: '500+', label: 'Active Members'   },
+  { value: '100+', label: 'Active Members'   },
   { value: '10+',  label: 'Certified Coaches' },
   { value: '5+',   label: 'Years in Service'  },
   
@@ -38,7 +45,7 @@ function Hero({ onSignup, onLogin }) {
   return (
     <section className="lp-hero">
       {/* Background image with dark overlay */}
-      <div className="lp-hero__bg" />
+      <div className="lp-hero__bg" style={{ backgroundImage: `url(${heroBg})` }} />
       <div className="lp-hero__overlay" />
 
       <div className="lp-hero__content">
@@ -108,15 +115,15 @@ function Features() {
 }
 
 // ─── Gallery / gym photos ─────────────────────────────────────────────────────
-function GymGallery() {
-  const photos = [
-    { url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80', alt: 'Gym floor with equipment' },
-    { url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80', alt: 'Member lifting weights' },
-    { url: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=600&q=80', alt: 'Gym members training' },
-    { url: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=600&q=80', alt: 'Gym interior' },
-    { url: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80', alt: 'Personal training session' },
-    { url: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80', alt: 'Cardio area' },
-  ];
+  function GymGallery() {
+    const photos = [
+      { url: gym1, alt: 'Gym floor with equipment' },
+      { url: gym2, alt: 'Member lifting weights' },
+      { url: gym3, alt: 'Gym members training' },
+      { url: gym4, alt: 'Gym interior' },
+      { url: gym5, alt: 'Personal training session' },
+      { url: gym6, alt: 'Cardio area' },
+    ];
 
   return (
     <section className="lp-section lp-gallery" id="gallery">
@@ -182,9 +189,7 @@ function Plans({ onSignup }) {
               <li>✓ QR Check-in</li>
               <li>✓ Progress Dashboard</li>
             </ul>
-            <button className="lp-btn lp-btn--primary lp-plan-card__cta" onClick={onSignup}>
-              Get Started
-            </button>
+
           </div>
         ))}
       </div>
@@ -260,7 +265,8 @@ function Footer() {
         <div>
           <div className="lp-footer__heading">Contact</div>
           <div className="lp-footer__text">Caby's Commercial, 96 Magsaysay Dr, Olongapo City, 2200 Zambales</div>
-          <div className="lp-footer__text">klfitness@email.com</div>
+          <div className="lp-footer__text">Facebook.com/KLFGYM</div>
+          <div className="lp-footer__text">Instagram.com/klf_gym</div>
         </div>
       </div>
       <div className="lp-footer__copy">© 2026 KL Fitness. All rights reserved.</div>

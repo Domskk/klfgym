@@ -1,16 +1,10 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { C, T } from '../../theme';
 import TrainersTab from './tabs/TrainersTab';
-<<<<<<< HEAD
 import ClassesTab  from './tabs/ClassesTab';
 import ProgressTab  from './tabs/ProgressTab';
 import ReportTab   from './tabs/ReportTab';
 import QRCodeTab   from './tabs/QrcodeTab';
-=======
-import ClassesTab from './tabs/ClassesTab';
-import ReportTab from './tabs/ReportTab';
-import QRCodeTab from './tabs/QrcodeTab';
->>>>>>> c68568dc71c1ecb29d8bef6c62dfc6b591336fab
 import './MobileApp.css';
 import { API_URL, getAnnouncements } from '../../services/api';
 
@@ -36,6 +30,14 @@ const MENU = [
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? '#F0C040' : '#777'}>
         <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6V9c0-3.07-1.63-5.64-4.5-6.32V2a1.5 1.5 0 0 0-3 0v.68C7.63 3.36 6 5.92 6 9v7l-2 2v1h16v-1l-2-2z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'progress', label: 'Progress',
+    icon: (active) => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? '#F0C040' : '#777'}>
+        <path d="M4 18h16v2H4zm2-4h3v4H6zm5-6h3v10h-3zm5 3h3v7h-3z" />
       </svg>
     ),
   },
@@ -553,6 +555,7 @@ export default function MobileApp({ onLogout }) {
       />
     );
     if (active === 'qr') return <QRCodeTab />;
+    if (active === 'progress') return <ProgressTab />;
     if (active === 'trainers') return <TrainersTab />;
     if (active === 'classes') return <ClassesTab />;
     if (active === 'report') return <ReportTab />;
