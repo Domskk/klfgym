@@ -2,6 +2,7 @@
 import { C, T } from '../../theme';
 import TrainersTab from './tabs/TrainersTab';
 import ClassesTab  from './tabs/ClassesTab';
+import ProgressTab  from './tabs/ProgressTab';
 import ReportTab   from './tabs/ReportTab';
 import QRCodeTab   from './tabs/QrcodeTab';
 import './MobileApp.css';
