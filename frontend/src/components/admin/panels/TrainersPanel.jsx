@@ -10,10 +10,10 @@ import {
 } from '../../../services/api';
 
 const STATUS_META = {
-  pending:    { color: '#F0C040', bg: '#1a1500', label: 'Pending' },
-  confirmed:  { color: '#4a9af0', bg: '#0a1220', label: 'Confirmed' },
-  completed:  { color: '#5aaa5a', bg: '#0a1a0a', label: 'Completed' },
-  cancelled:  { color: '#888',    bg: '#1a1a1a', label: 'Cancelled' },
+  pending: { color: '#F0C040', bg: '#1a1500', label: 'Pending' },
+  confirmed: { color: '#4a9af0', bg: '#0a1220', label: 'Confirmed' },
+  completed: { color: '#5aaa5a', bg: '#0a1a0a', label: 'Completed' },
+  cancelled: { color: '#888', bg: '#1a1a1a', label: 'Cancelled' },
 };
 
 function fmtDate(d) {
@@ -28,15 +28,102 @@ function fmtTime(t) {
   return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
-function BookingBadge({ status }) {
+function BookingBadge({ status, cancel_reason }) {
   const meta = STATUS_META[status] || STATUS_META.pending;
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
-      background: meta.bg, color: meta.color, textTransform: 'capitalize',
+    <div>
+      <span style={{
+        fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
+        background: meta.bg, color: meta.color, textTransform: 'capitalize',
+      }}>
+        {meta.label}
+      </span>
+      {status === 'cancelled' && cancel_reason && (
+        <div style={{ fontSize: 10, color: '#777', marginTop: 4, maxWidth: 280 }}>
+          {cancel_reason}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Cancel Reason Modal
+function CancelReasonModal({ isOpen, onClose, onConfirm }) {
+  const [reason, setReason] = useState('');
+  const [customReason, setCustomReason] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    const finalReason = reason === 'Other' ? customReason.trim() : reason;
+    if (!finalReason) {
+      alert("Please select or enter a reason");
+      return;
+    }
+    onConfirm(finalReason);
+    setReason('');
+    setCustomReason('');
+    onClose();
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {meta.label}
-    </span>
+      <div style={{
+        background: '#0f0f0f', border: `1px solid ${C.gold}`, borderRadius: 12,
+        width: '90%', maxWidth: 420, padding: 24,
+      }}>
+        <h3 style={{ color: C.gold, marginBottom: 8 }}>Cancel Booking</h3>
+        <p style={{ color: C.textSecondary, marginBottom: 20 }}>
+          Please provide a reason for cancellation
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+          {[
+            'Member did not show up',
+            'Trainer unavailable',
+            'Schedule conflict',
+            'Member requested cancellation',
+            'Other'
+          ].map(r => (
+            <label key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="cancelReason"
+                checked={reason === r}
+                onChange={() => setReason(r)}
+                style={{ accentColor: C.gold }}
+              />
+              <span style={{ color: C.textSecondary }}>{r}</span>
+            </label>
+          ))}
+        </div>
+
+        {reason === 'Other' && (
+          <textarea
+            placeholder="Please specify the reason..."
+            value={customReason}
+            onChange={(e) => setCustomReason(e.target.value)}
+            style={{
+              width: '100%', minHeight: 80, background: '#1a1a1a',
+              border: `1px solid ${C.border}`, borderRadius: 8,
+              color: 'white', padding: 12, resize: 'vertical'
+            }}
+          />
+        )}
+
+        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+          <OutlineButton onClick={onClose} style={{ flex: 1 }}>
+            Cancel
+          </OutlineButton>
+          <GoldButton onClick={handleSubmit} style={{ flex: 1 }}>
+            Confirm Cancellation
+          </GoldButton>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -46,6 +133,8 @@ function TrainerDetail({ trainer, token }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('bookings');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -64,34 +153,51 @@ function TrainerDetail({ trainer, token }) {
     loadBookings();
   }, [loadBookings]);
 
-  // Optimistic Status Update
   const handleStatusChange = async (bookingId, newStatus) => {
+    if (newStatus === 'cancelled') {
+      setBookingToCancel(bookingId);
+      setShowCancelModal(true);
+      return;
+    }
+
+    // For other statuses
+    await updateBooking(bookingId, newStatus);
+  };
+
+  const updateBooking = async (bookingId, newStatus, cancelReason = null) => {
     const previousBookings = [...bookings];
 
-    // Optimistic update
-    setBookings(prev => 
-      prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b)
+    setBookings(prev =>
+      prev.map(b => b.id === bookingId
+        ? { ...b, status: newStatus, cancel_reason: cancelReason }
+        : b
+      )
     );
 
     try {
-      const res = await updateBookingStatus(bookingId, newStatus, token);
+      const res = await updateBookingStatus(bookingId, newStatus, token, cancelReason);
       if (res.error) throw new Error(res.error);
-
-      // Optional: Show success toast
-      // alert(`Booking ${newStatus} successfully!`);
     } catch (err) {
       console.error(err);
-      setBookings(previousBookings); // Rollback
+      setBookings(previousBookings); // rollback
       alert(err.message || 'Failed to update status');
     }
+  };
+
+  const handleCancelConfirm = (reason) => {
+    if (bookingToCancel) {
+      updateBooking(bookingToCancel, 'cancelled', reason);
+    }
+    setShowCancelModal(false);
+    setBookingToCancel(null);
   };
 
   const activeBookings = bookings.filter(b => b.status !== 'cancelled');
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
   const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
-  const bookedMembers = [...new Set(activeBookings.map(b => b.member?.id))].map(id => 
-    activeBookings.find(b => b.member?.id === id)?.member
-  ).filter(Boolean);
+  const bookedMembers = [...new Set(activeBookings.map(b => b.member?.id))]
+    .map(id => activeBookings.find(b => b.member?.id === id)?.member)
+    .filter(Boolean);
 
   const cellStyle = { padding: '10px 8px', fontSize: 12, color: '#aaa', borderBottom: '0.5px solid #1a1a1a' };
   const headStyle = { padding: '8px 8px', fontSize: 11, color: '#555', textAlign: 'left', fontWeight: 500 };
@@ -116,8 +222,8 @@ function TrainerDetail({ trainer, token }) {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
         {['bookings', 'members'].map(t => (
-          <button 
-            key={t} 
+          <button
+            key={t}
             onClick={() => setTab(t)}
             style={{
               padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
@@ -135,7 +241,7 @@ function TrainerDetail({ trainer, token }) {
       {/* Bookings Tab */}
       {tab === 'bookings' && (
         activeBookings.length === 0 ? (
-          <div style={{ color: '#444', textAlign: 'center', padding: '30px 0' }}>No bookings yet.</div>
+          <div style={{ color: '#444', textAlign: 'center', padding: '30px 0' }}>No active bookings yet.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -154,15 +260,19 @@ function TrainerDetail({ trainer, token }) {
                   <td style={cellStyle}>{fmtDate(b.booking_date)}</td>
                   <td style={cellStyle}>{fmtTime(b.booking_time)}</td>
                   <td style={cellStyle}>
-                    <BookingBadge status={b.status} />
+                    <BookingBadge status={b.status} cancel_reason={b.cancel_reason} />
                   </td>
                   <td style={cellStyle}>
                     <select
                       value={b.status}
                       onChange={(e) => handleStatusChange(b.id, e.target.value)}
                       style={{
-                        background: '#1a1a1a', border: '0.5px solid #2a2a2a',
-                        color: '#aaa', borderRadius: 6, padding: '4px 8px', fontSize: 11,
+                        background: '#1a1a1a',
+                        border: '0.5px solid #2a2a2a',
+                        color: '#aaa',
+                        borderRadius: 6,
+                        padding: '4px 8px',
+                        fontSize: 11,
                       }}
                     >
                       <option value="pending">Pending</option>
@@ -208,11 +318,21 @@ function TrainerDetail({ trainer, token }) {
           </table>
         )
       )}
+
+      {/* Cancel Reason Modal */}
+      <CancelReasonModal
+        isOpen={showCancelModal}
+        onClose={() => {
+          setShowCancelModal(false);
+          setBookingToCancel(null);
+        }}
+        onConfirm={handleCancelConfirm}
+      />
     </div>
   );
 }
 
-// Main Panel
+// ── Main Panel ───────────────────────────────────────────────────────────────
 export default function TrainersPanel({ token }) {
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -248,7 +368,6 @@ export default function TrainersPanel({ token }) {
     try {
       const data = await addTrainer(newTrainer, token);
       if (data.error) throw new Error(data.error);
-
       setTrainers(prev => [...prev, data.trainer || data]);
       setNewTrainer({ full_name: '', email: '', phone: '' });
       setShowAddForm(false);
@@ -265,7 +384,6 @@ export default function TrainersPanel({ token }) {
     try {
       const data = await deleteTrainer(id, token);
       if (data.error) throw new Error(data.error);
-
       setTrainers(prev => prev.filter(t => t.id !== id));
       if (expandedId === id) setExpandedId(null);
     } catch (err) {
@@ -324,7 +442,6 @@ export default function TrainersPanel({ token }) {
                 <span key={h} style={{ color: '#555', fontSize: 11, fontWeight: 500 }}>{h}</span>
               ))}
             </div>
-
             {trainers.map(t => (
               <div key={t.id}>
                 <div
@@ -348,7 +465,6 @@ export default function TrainersPanel({ token }) {
                     <OutlineButton danger onClick={() => handleDelete(t.id)}>Remove</OutlineButton>
                   </div>
                 </div>
-
                 {expandedId === t.id && <TrainerDetail trainer={t} token={token} />}
               </div>
             ))}

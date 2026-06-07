@@ -9,8 +9,17 @@ const calculateDropoutRisk = (features, reasons = []) => {
 
   let score = 0.0;
 
+  // Stronger grace period for new members
+  if (membershipDurationDays <= 7) {
+    return { 
+      riskScore: 0.15, 
+      riskLevel: 'Low', 
+      explanation: 'New member - grace period' 
+    };
+  }
+
   // Strong penalty for no recent activity
-  if (lastVisitGapDays >= 999) score += 0.45;           // Never visited
+  if (lastVisitGapDays >= 999) score += 0.45;
   else if (lastVisitGapDays > 30) score += 0.35;
   else if (lastVisitGapDays > 14) score += 0.25;
 
@@ -18,13 +27,10 @@ const calculateDropoutRisk = (features, reasons = []) => {
   score += Math.max(0, 15 - attendanceFrequency) * 0.035;
 
   // No visits in recent periods
-  if (visitsLast7Days === 0) score += 0.20;
-  if (visitsLast30Days === 0) score += 0.25;
+  if (visitsLast7Days === 0 && membershipDurationDays > 7) score += 0.20;
+  if (visitsLast30Days === 0 && membershipDurationDays > 14) score += 0.25;
 
-  // New member grace (first 2 weeks)
-  if (membershipDurationDays > 0 && membershipDurationDays < 14) score -= 0.15;
-
-  // Dropout reasons are very important
+  // Dropout reasons
   if (reasons.length > 0) {
     score += Math.min(reasons.length, 3) * 0.18;
   }
