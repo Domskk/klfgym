@@ -111,9 +111,9 @@ export default function AdminDashboard({ onLogout }) {
               border: `1px solid ${C.gold}`, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: C.gold, fontSize: 11, fontWeight: 600,
-            }}>RA</div>
+            }}>KL</div>
             <div>
-              <div style={{ color: C.textPrimary, fontSize: 12, fontWeight: 500 }}>R. Aguila</div>
+              <div style={{ color: C.textPrimary, fontSize: 12, fontWeight: 500 }}>Kyrie Lee</div>
               <div style={{ color: C.textMuted, fontSize: 10 }}>Gym Owner</div>
             </div>
           </div>

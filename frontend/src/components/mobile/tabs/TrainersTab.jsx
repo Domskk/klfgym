@@ -4,7 +4,7 @@ import { Avatar, GoldButton, StatusPill } from '../../shared';
 import { createBooking, getMyBookings } from '../../../services/api';
 import { API_URL } from '../../../services/api';
 
-const CATEGORIES = ['All', 'Strength', 'Weight Loss', 'Yoga', 'Cardio', 'Nutrition'];
+const CATEGORIES = ['All', 'Strength', 'Weight Loss', 'Yoga', 'Cardio', 'Powerlifting Coach'];
 
 function TrainerCard({ trainer, onBook, bookingStatus }) {
   // bookingStatus: null | 'pending' | 'confirmed' | 'completed' | 'cancelled'

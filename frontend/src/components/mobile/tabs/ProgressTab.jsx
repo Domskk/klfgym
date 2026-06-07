@@ -71,8 +71,7 @@ const MOCK_ACTIVITY = [
   { id: 14, date: '2026-02-20', time: '6:00 AM', type: 'Morning Session', focus: 'Cardio & Endurance',  duration: '50m',    calories: 300, notes: '1-mile PR at 7:30 min.' },
 ];
 
-const WORKOUT_TYPES = ['All Types', 'Morning Session', 'Evening Session'];
-const FOCUS_TAGS    = ['All Focus', 'Chest & Triceps', 'Back & Biceps', 'Leg Day', 'Shoulders & Arms', 'Cardio', 'Full Body'];
+const FOCUS_TAGS = ['All Focus', 'Chest & Triceps', 'Back & Biceps', 'Leg Day', 'Shoulders & Arms', 'Cardio', 'Full Body'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED MICRO-COMPONENTS
@@ -246,17 +245,6 @@ function OverviewSection({ weights, weeklyData, sessions, sessionTarget, streak,
   const totalCalories = activity.reduce((s, a) => s + (a.calories || 0), 0);
   const sessionPct    = Math.round((sessions / sessionTarget) * 100);
 
-  // Weekly heatmap: last 21 days
-  const heatmapDays = useMemo(() => {
-    const activityDates = new Set(activity.map(a => a.date));
-    return Array.from({ length: 21 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (20 - i));
-      const key = d.toISOString().split('T')[0];
-      return { date: key, active: activityDates.has(key), day: d.getDay() };
-    });
-  }, [activity]);
-
   return (
     <>
       {/* Summary stats 2×2 */}
@@ -272,52 +260,6 @@ function OverviewSection({ weights, weeklyData, sessions, sessionTarget, streak,
         <SectionHeading label="Monthly Goal" right={<span style={{ color: C.textMuted, fontSize: 11 }}>{sessions} / {sessionTarget} sessions</span>} />
         <ProgressBar pct={sessionPct} />
         <div style={{ color: C.gold, fontSize: 11, textAlign: 'right', marginTop: 5 }}>{sessionPct}% complete</div>
-      </Card>
-
-      {/* 21-day activity heatmap */}
-      <Card>
-        <SectionHeading label="21-Day Activity" right={<span style={{ color: C.textMuted, fontSize: 11 }}>last 3 weeks</span>} />
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          {heatmapDays.map((d, i) => (
-            <div key={i} title={d.date} style={{
-              width:        28,
-              height:       28,
-              borderRadius: 5,
-              background:   d.active ? C.gold : '#1e1e1e',
-              border:       `0.5px solid ${d.active ? C.goldDark : C.border}`,
-              opacity:      d.active ? 1 : 0.5,
-              position:     'relative',
-              display:      'flex',
-              alignItems:   'center',
-              justifyContent: 'center',
-              fontSize:     9,
-              color:        d.active ? '#0a0a0a' : C.textMuted,
-              fontWeight:   600,
-            }}>
-              {new Date(d.date).getDate()}
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 10, marginTop: 10, alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: C.gold }} />
-            <span style={{ color: C.textMuted, fontSize: 10 }}>Trained</span>
-          </div>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: '#1e1e1e', border: `0.5px solid ${C.border}` }} />
-            <span style={{ color: C.textMuted, fontSize: 10 }}>Rest</span>
-          </div>
-        </div>
-      </Card>
-
-      {/* 8-week session trend */}
-      <Card>
-        <SectionHeading label="8-Week Session Trend" right={<span style={{ color: C.textMuted, fontSize: 11 }}>sessions / week</span>} />
-        <Sparkline data={weeklyData} height={60} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-          <span style={{ color: C.textMuted, fontSize: 10 }}>8 wks ago</span>
-          <span style={{ color: C.gold, fontSize: 10, fontWeight: 600 }}>This week</span>
-        </div>
       </Card>
 
       {/* Recent 3 sessions */}
@@ -371,11 +313,13 @@ function OverviewSection({ weights, weeklyData, sessions, sessionTarget, streak,
 // ─────────────────────────────────────────────────────────────────────────────
 
 function WeightSection({ weights, setWeights, goalWeight, setGoalWeight, heightCm }) {
-  const [adding,     setAdding]     = useState(false);
-  const [newKg,      setNewKg]      = useState('');
-  const [editGoal,   setEditGoal]   = useState(false);
-  const [goalInput,  setGoalInput]  = useState(String(goalWeight));
-  const [showAll,    setShowAll]    = useState(false);
+  const [adding,      setAdding]      = useState(false);
+  const [newKg,       setNewKg]       = useState('');
+  const [heightInput, setHeightInput] = useState(String(heightCm));
+  const [height,      setHeight]      = useState(heightCm);
+  const [editGoal,    setEditGoal]    = useState(false);
+  const [goalInput,   setGoalInput]   = useState(String(goalWeight));
+  const [showAll,     setShowAll]     = useState(false);
 
   const current  = weights.at(-1)?.kg ?? 0;
   const prev     = weights.at(-2)?.kg ?? current;
@@ -397,6 +341,10 @@ function WeightSection({ weights, setWeights, goalWeight, setGoalWeight, heightC
   function logWeight() {
     const val = parseFloat(newKg);
     if (isNaN(val) || val < 20 || val > 350) return;
+    const heightVal = parseFloat(heightInput);
+    if (!isNaN(heightVal) && heightVal >= 80 && heightVal <= 250) {
+      setHeight(heightVal);
+    }
     const today = new Date().toISOString().split('T')[0];
     // TODO: await addDoc(collection(db, 'weightLogs'), { userId, kg: val, date: today });
     setWeights(prev => {
@@ -464,13 +412,20 @@ function WeightSection({ weights, setWeights, goalWeight, setGoalWeight, heightC
 
         {/* Log button */}
         {adding ? (
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
             <TextInput
               type="number"
               value={newKg}
               onChange={setNewKg}
               placeholder="Enter weight (kg)"
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 120 }}
+            />
+            <TextInput
+              type="number"
+              value={heightInput}
+              onChange={setHeightInput}
+              placeholder="Height (cm)"
+              style={{ width: 120 }}
             />
             <GoldBtn onClick={logWeight}>Log</GoldBtn>
             <button onClick={() => { setAdding(false); setNewKg(''); }} style={{
@@ -505,7 +460,7 @@ function WeightSection({ weights, setWeights, goalWeight, setGoalWeight, heightC
           </div>
           <div>
             <div style={{ color: bmiColor, fontSize: 16, fontWeight: 700 }}>{bmiLabel}</div>
-            <div style={{ color: C.textMuted, fontSize: 12, marginTop: 4 }}>Height: {heightCm} cm</div>
+            <div style={{ color: C.textMuted, fontSize: 12, marginTop: 4 }}>Height: {height} cm</div>
             <div style={{ color: C.textMuted, fontSize: 12 }}>Weight: {current} kg</div>
           </div>
         </div>
@@ -896,13 +851,12 @@ function RecordsSection({ prs, setPRs }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ActivitySection({ activity, setActivity }) {
-  const [typeFilter,   setTypeFilter]   = useState('All Types');
-  const [focusFilter,  setFocusFilter]  = useState('All Focus');
-  const [expanded,     setExpanded]     = useState(null);
-  const [addingLog,    setAddingLog]    = useState(false);
-  const [logForm,      setLogForm]      = useState({
+  const [focusFilter, setFocusFilter] = useState('All Focus');
+  const [expanded,   setExpanded]     = useState(null);
+  const [addingLog,  setAddingLog]    = useState(false);
+  const [logForm,    setLogForm]      = useState({
     date: new Date().toISOString().split('T')[0],
-    time: '06:00 AM', type: 'Morning Session',
+    time: '06:00 AM', type: 'Workout',
     focus: '', duration: '', calories: '', notes: '',
   });
 
@@ -911,16 +865,14 @@ function ActivitySection({ activity, setActivity }) {
     'Shoulders & Arms', 'Full Body', 'Cardio', 'Deadlift Focus',
     'Push Day', 'Pull Day', 'Cardio & Endurance', 'Other',
   ];
-  const TYPE_OPTIONS  = ['Morning Session', 'Evening Session', 'Weekend Session'];
 
   // Filter
   const filtered = useMemo(() => {
     return activity.filter(a => {
-      const typeOk  = typeFilter  === 'All Types' || a.type === typeFilter;
       const focusOk = focusFilter === 'All Focus' || a.focus?.includes(focusFilter.replace('All Focus', ''));
-      return typeOk && focusOk;
+      return focusOk;
     });
-  }, [activity, typeFilter, focusFilter]);
+  }, [activity, focusFilter]);
 
   function saveLog() {
     if (!logForm.focus || !logForm.duration) return;
@@ -952,12 +904,6 @@ function ActivitySection({ activity, setActivity }) {
             <div style={{ flex: 1 }}>
               <div style={{ color: C.textMuted, fontSize: 11, marginBottom: 5 }}>Date</div>
               <input type="date" value={logForm.date} onChange={e => setLogForm(f => ({ ...f, date: e.target.value }))} style={{ ...inp, width: '100%', colorScheme: 'dark' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: C.textMuted, fontSize: 11, marginBottom: 5 }}>Session Type</div>
-              <select value={logForm.type} onChange={e => setLogForm(f => ({ ...f, type: e.target.value }))} style={{ ...inp, width: '100%' }}>
-                {TYPE_OPTIONS.map(o => <option key={o}>{o}</option>)}
-              </select>
             </div>
           </div>
           <div style={{ marginBottom: 8 }}>
@@ -1009,9 +955,7 @@ function ActivitySection({ activity, setActivity }) {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, marginBottom: 10 }}>
-        {WORKOUT_TYPES.map(f => <FilterChip key={f} label={f} active={typeFilter === f} onClick={() => setTypeFilter(f)} />)}
-        <div style={{ width: 1, background: C.border, flexShrink: 0, margin: '0 2px' }} />
-        {FOCUS_TAGS.map(f => <FilterChip key={f} label={f} active={focusFilter === f} onClick={() => setFocusFilter(f)} />)}
+
       </div>
 
       {/* Summary bar */}
@@ -1121,15 +1065,12 @@ function ActivitySection({ activity, setActivity }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const INNER_TABS = [
-  { id: 'overview',  label: 'Overview'  },
-  { id: 'weight',    label: 'Weight'    },
-  { id: 'workouts',  label: 'Workouts'  },
   { id: 'records',   label: 'Records'   },
   { id: 'activity',  label: 'Activity'  },
 ];
 
 export default function ProgressTab() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('records');
 
   // ── State — replace each with a Firebase listener / API call ──────────────
   // TODO: const { data: weights }  = useFirestoreCollection('weightLogs',  where('userId','==',uid), orderBy('date'));
@@ -1209,15 +1150,6 @@ export default function ProgressTab() {
             goalWeight={goalWeight}
             setGoalWeight={setGoalWeight}
             heightCm={MOCK_HEIGHT_CM}
-          />
-        )}
-
-        {activeTab === 'workouts' && (
-          <WorkoutsSection
-            sessions={MOCK_SESSIONS_THIS_MONTH}
-            sessionTarget={MOCK_SESSION_TARGET}
-            weeklyData={MOCK_WEEKLY_SESSIONS}
-            activity={activity}
           />
         )}
 

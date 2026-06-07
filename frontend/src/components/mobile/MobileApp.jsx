@@ -60,7 +60,7 @@ const MENU = [
 ];
 
 // Tabs that require an active membership
-const MEMBERSHIP_GATED_TABS = ['qr', 'trainers'];
+const MEMBERSHIP_GATED_TABS = ['qr', 'trainers', 'progress'];
 
 // helpers
 function formatTime(date) {
