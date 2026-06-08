@@ -9,6 +9,8 @@ const supabase = require('../config/db');
 const { generateToken } = require('../utils/jwt.utils');
 const { generateQRForMember } = require('../services/qr.service');
 const { refreshUserAnalytics } = require('../services/analytics.refresh');
+const crypto = require('crypto');
+const { sendEmail } = require('../services/notification.services');
 
 // ── Register ──────────────────────────────────────────────────────────────────
 const register = async (req, res) => {
@@ -162,4 +164,88 @@ const cancelMembership = async (req, res) => {
   }
 };
 
-module.exports = { register, login, cancelMembership };
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, email, full_name')
+      .eq('email', email)
+      .single();
+
+    if (!user) return res.json({ success: true });
+
+    const resetToken  = crypto.randomBytes(32).toString('hex');
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    await supabase.from('users').update({
+      reset_token:        resetToken,
+      reset_token_expiry: resetExpiry,
+    }).eq('id', user.id);
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    // ← reuse existing sendEmail instead of creating a new transporter
+    await sendEmail(
+      user.email,
+      'Reset Your Password — KL Fitness',
+      `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
+          <h2 style="color:#F0C040;margin-bottom:8px">KL FITNESS</h2>
+          <p>Hi <strong>${user.full_name}</strong>,</p>
+          <p>We received a request to reset your password. Click the button below — this link expires in <strong>1 hour</strong>.</p>
+          <a href="${resetLink}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:#F0C040;color:#000;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px">
+            Reset My Password
+          </a>
+          <p style="color:#888;font-size:12px">If you didn't request this, you can safely ignore this email.</p>
+          <hr style="border:none;border-top:1px solid #222;margin:24px 0"/>
+          <p style="color:#555;font-size:11px">KL Fitness Gym Management System</p>
+        </div>
+      `
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to send reset email.' });
+  }
+};
+
+// ── Reset Password ────────────────────────────────────────────────────────────
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+  try {
+    if (!token || !newPassword)
+      return res.status(400).json({ error: 'Token and new password are required.' });
+
+    if (newPassword.length < 6)
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, reset_token_expiry')
+      .eq('reset_token', token)
+      .single();
+
+    if (!user)
+      return res.status(400).json({ error: 'Invalid or expired reset link.' });
+
+    if (new Date(user.reset_token_expiry) < new Date())
+      return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
+
+    const password_hash = await bcrypt.hash(newPassword, 10);
+
+    await supabase.from('users').update({
+      password_hash,
+      reset_token:        null,
+      reset_token_expiry: null,
+    }).eq('id', user.id);
+
+    res.json({ success: true, message: 'Password reset successfully.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+};
+
+module.exports = { register, login, cancelMembership, forgotPassword, resetPassword };

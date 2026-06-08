@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { loginUser } from '../services/api';
-import { signInWithGoogle, sendPasswordReset } from '../supabase';
+import { loginUser, forgotPassword } from '../services/api';
+import { signInWithGoogle } from '../supabase';
 import './Login.css';
 
 // ─── Eye icons ────────────────────────────────────────────────────────────────
@@ -35,11 +35,14 @@ function ForgotPasswordModal({ onClose }) {
     if (!email.trim()) { setError('Please enter your email.'); return; }
     setLoading(true); setError('');
     try {
-      const { error: err } = await sendPasswordReset(email);
-      if (err) { setError(err.message || 'Could not send reset email.'); }
-      else      { setSent(true); }
-    } catch { setError('Server error. Please try again.'); }
-    finally   { setLoading(false); }
+      const data = await forgotPassword(email);
+      if (data.error) throw new Error(data.error);
+      setSent(true);
+    } catch (err) {
+      setError(err.message || 'Failed to send reset email.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
