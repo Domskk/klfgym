@@ -5,7 +5,7 @@ const supabase = require('../config/db');
 // BREVO SMTP TRANSPORTER
 const transporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
-  port: 587,
+  port: 465,
   secure: false, 
   auth: {
     user: process.env.BREVO_SMTP_USER,   // Your Brevo login email
