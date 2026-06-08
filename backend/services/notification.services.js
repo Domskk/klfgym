@@ -34,22 +34,36 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 // EMAIL SERVICE (BREVO)
 const sendEmail = async (to, subject, html) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"${process.env.BREVO_FROM_NAME}" <${process.env.BREVO_FROM_EMAIL}>`,
-      to,
-      subject,
-      html,
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: {
+          email: process.env.BREVO_FROM_EMAIL,
+          name: process.env.BREVO_FROM_NAME
+        },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html
+      })
     });
 
-    console.log(' Email sent:', info.messageId);
-    return info;
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message);
+    }
+
+    console.log('Email sent via Brevo API');
+    return await response.json();
 
   } catch (err) {
     console.error('Email error:', err.message);
     throw err;
   }
 };
-
 // PUSH SERVICE
 const sendPush = async (userId, title, body) => {
   const { data, error } = await supabase
