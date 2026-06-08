@@ -5,7 +5,7 @@ const getAllTrainers = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, full_name, email, phone, is_active, created_at')
+      .select('id, full_name, email, phone, is_active, created_at, specialty')
       .eq('role', 'trainer')
       .order('full_name', { ascending: true });
 
@@ -19,7 +19,7 @@ const getAllTrainers = async (req, res) => {
 };
 
 const addTrainer = async (req, res) => {
-  const { full_name, email, phone } = req.body;
+  const { full_name, email, phone, specialty } = req.body;
 
   try {
     if (!full_name || !email) {
@@ -54,10 +54,11 @@ const addTrainer = async (req, res) => {
         password_hash,
         role: 'trainer',
         phone: phone ? phone.trim() : null,
+        specialty: specialty ? specialty.trim() : null,
         is_active: true,
         qr_token: `KLF-TRAINER-${Date.now().toString(36)}`
       })
-      .select('id, full_name, email, phone, is_active')
+      .select('id, full_name, email, phone, is_active, specialty')
       .single();
 
     if (error) throw error;

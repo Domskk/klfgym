@@ -338,7 +338,7 @@ export default function TrainersPanel({ token }) {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
-  const [newTrainer, setNewTrainer] = useState({ full_name: '', email: '', phone: '' });
+  const [newTrainer, setNewTrainer] = useState({ full_name: '', email: '', phone: '', specialty: '' });
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
 
@@ -423,6 +423,23 @@ export default function TrainersPanel({ token }) {
             <FormInput placeholder="Full Name *" value={newTrainer.full_name} onChange={e => setNewTrainer({ ...newTrainer, full_name: e.target.value })} />
             <FormInput type="email" placeholder="Email *" value={newTrainer.email} onChange={e => setNewTrainer({ ...newTrainer, email: e.target.value })} />
             <FormInput placeholder="Phone" value={newTrainer.phone} onChange={e => setNewTrainer({ ...newTrainer, phone: e.target.value })} />
+            <select
+              value={newTrainer.specialty}
+              onChange={e => setNewTrainer({ ...newTrainer, specialty: e.target.value })}
+              style={{
+                background: '#0d0d0d', border: `1px solid ${C.border}`, borderRadius: 8,
+                color: newTrainer.specialty ? '#fff' : '#555', fontSize: 13,
+                padding: '9px 12px', outline: 'none', width: '100%',
+              }}
+            >
+              <option value="">Specialty</option>
+              <option value="Personal Trainer">Personal Trainer</option>
+              <option value="Strength">Strength</option>
+              <option value="Weight Loss">Weight Loss</option>
+              <option value="Yoga">Yoga</option>
+              <option value="Cardio">Cardio</option>
+              <option value="Powerlifting Coach">Powerlifting Coach</option>
+            </select>
             <GoldButton onClick={handleAddTrainer} disabled={addLoading}>
               {addLoading ? 'Adding…' : 'Add Trainer'}
             </GoldButton>
@@ -437,8 +454,8 @@ export default function TrainersPanel({ token }) {
           <div style={{ textAlign: 'center', padding: '60px', color: '#666' }}>No trainers yet.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', padding: '8px 12px', borderBottom: `0.5px solid ${C.border}` }}>
-              {['Trainer', 'Email', 'Phone', 'Status', ''].map(h => (
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr auto', padding: '8px 12px', borderBottom: `0.5px solid ${C.border}` }}>
+              {['Trainer', 'Email', 'Phone', 'Specialty', 'Status', ''].map(h => (
                 <span key={h} style={{ color: '#555', fontSize: 11, fontWeight: 500 }}>{h}</span>
               ))}
             </div>
@@ -447,7 +464,7 @@ export default function TrainersPanel({ token }) {
                 <div
                   onClick={() => toggleExpand(t.id)}
                   style={{
-                    display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto',
+                    display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr auto',
                     padding: '12px 12px', borderBottom: `0.5px solid ${C.border}`,
                     cursor: 'pointer', alignItems: 'center',
                     background: expandedId === t.id ? '#0f0f0f' : 'transparent',
@@ -460,6 +477,7 @@ export default function TrainersPanel({ token }) {
                   </div>
                   <span style={{ color: '#888', fontSize: 12 }}>{t.email}</span>
                   <span style={{ color: '#888', fontSize: 12 }}>{t.phone || '—'}</span>
+                  <span style={{ color: '#888', fontSize: 12 }}>{t.specialty || 'Personal Trainer'}</span>
                   <StatusPill status={t.is_active ? 'Available' : 'Inactive'} />
                   <div onClick={e => e.stopPropagation()}>
                     <OutlineButton danger onClick={() => handleDelete(t.id)}>Remove</OutlineButton>

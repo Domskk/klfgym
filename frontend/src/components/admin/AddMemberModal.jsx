@@ -146,7 +146,7 @@ export default function AddMemberModal({ onClose, onSuccess, editUser = null }) 
 
   // ── Create form ──────────────────────────────────────────────────────────────
   const [createForm, setCreateForm] = useState({
-    full_name: '', email: '', password: '', role: 'member',
+    full_name: '', email: '', password: '',
     plan: '1month', membership_start: new Date().toISOString().split('T')[0],
   });
   const setC = (k, v) => setCreateForm(f => ({ ...f, [k]: v }));
@@ -323,14 +323,6 @@ export default function AddMemberModal({ onClose, onSuccess, editUser = null }) 
                   <Field label="Full Name" required>
                     <input style={inputStyle} placeholder="e.g. Juan dela Cruz"
                       value={createForm.full_name} onChange={e => setC('full_name', e.target.value)} />
-                  </Field>
-                  <Field label="Role">
-                    <select style={{ ...inputStyle, cursor: 'pointer' }}
-                      value={createForm.role} onChange={e => setC('role', e.target.value)}>
-                      <option value="member">Member</option>
-                      <option value="trainer">Trainer</option>
-                      <option value="admin">Admin</option>
-                    </select>
                   </Field>
                 </div>
                 <Field label="Email Address" required>

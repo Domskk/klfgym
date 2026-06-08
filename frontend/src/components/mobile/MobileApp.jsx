@@ -6,7 +6,7 @@ import ProgressTab  from './tabs/ProgressTab';
 import ReportTab   from './tabs/ReportTab';
 import QRCodeTab   from './tabs/QrcodeTab';
 import './MobileApp.css';
-import { API_URL, getAnnouncements } from '../../services/api';
+import { API_URL, getAnnouncements, updatePassword, updateProfile} from '../../services/api';
 
 const MENU = [
   {
@@ -129,23 +129,54 @@ function ProfilePanel({ profileData, setProfileData, membershipActive, membershi
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPwFields, setShowPwFields] = useState({ current: false, new: false, confirm: false });
+  const [saveMsg,  setSaveMsg]  = useState('');
+  const [pwMsg,    setPwMsg]    = useState('');
+  const [pwError,  setPwError]  = useState('');
+  const [saving,   setSaving]   = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => { setEditedData(profileData); }, [profileData]);
 
-  const handleSave = () => { setProfileData(editedData); alert('Profile updated!'); };
-  const handlePwChange = () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) { alert('Passwords do not match!'); return; }
-    if (passwordData.newPassword.length < 6) { alert('Min 6 characters.'); return; }
-    alert('Password updated!');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setShowPasswordForm(false);
+  // handleSave — replace the fetch block
+  const handleSave = async () => {
+    setSaveMsg(''); setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const data = await updateProfile({ full_name: editedData.name, email: editedData.email }, token);
+      if (data.error) throw new Error(data.error);
+      setProfileData(editedData);
+      setSaveMsg('✓ Profile updated successfully!');
+    } catch (err) {
+      setSaveMsg('✗ ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
+  // handlePwChange — replace the fetch block
+  const handlePwChange = async () => {
+    setPwError(''); setPwMsg('');
+    if (!passwordData.currentPassword) { setPwError('Enter your current password.'); return; }
+    if (passwordData.newPassword !== passwordData.confirmPassword) { setPwError('Passwords do not match.'); return; }
+    if (passwordData.newPassword.length < 6) { setPwError('Min 6 characters.'); return; }
+    setPwLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const data = await updatePassword(passwordData.currentPassword, passwordData.newPassword, token);
+      if (data.error) throw new Error(data.error);
+      setPwMsg('✓ Password updated successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => { setShowPasswordForm(false); setPwMsg(''); }, 1500);
+    } catch (err) {
+      setPwError('✗ ' + err.message);
+    } finally {
+      setPwLoading(false);
+    }
+  };
   return (
     <div className="mobile-app-profile-panel">
       <h1 className="mobile-app-profile-title">Profile Settings</h1>
 
-      {/* Membership status banner */}
       {!membershipActive && (
         <div style={{
           background: 'rgba(240,192,64,0.07)', border: '1px solid rgba(240,192,64,0.2)',
@@ -153,8 +184,8 @@ function ProfilePanel({ profileData, setProfileData, membershipActive, membershi
         }}>
           <div style={{ color: '#F0C040', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
             {membership.status === 'no_membership' ? '⚠️ No Active Membership' :
-             membership.status === 'expired' ? '⏰ Membership Expired' :
-             '❌ Membership Cancelled'}
+             membership.status === 'expired'       ? '⏰ Membership Expired' :
+                                                     '❌ Membership Cancelled'}
           </div>
           <div style={{ color: '#666', fontSize: 11 }}>
             Visit the front desk to avail or renew a membership plan.
@@ -168,8 +199,7 @@ function ProfilePanel({ profileData, setProfileData, membershipActive, membershi
         </div>
         <input type="file" id="profile-pic-input" accept="image/*" style={{ display: 'none' }}
           onChange={e => {
-            const file = e.target.files?.[0];
-            if (!file) return;
+            const file = e.target.files?.[0]; if (!file) return;
             const r = new FileReader();
             r.onload = ev => setEditedData({ ...editedData, profileImage: ev.target?.result || '' });
             r.readAsDataURL(file);
@@ -193,7 +223,14 @@ function ProfilePanel({ profileData, setProfileData, membershipActive, membershi
             onChange={e => setEditedData({ ...editedData, email: e.target.value })}
             className="mobile-app-form-input" />
         </div>
-        <button onClick={handleSave} className="mobile-app-btn">Save Changes</button>
+        {saveMsg && (
+          <div style={{ fontSize: 12, marginBottom: 8, color: saveMsg.startsWith('✓') ? '#5aaa5a' : '#ff6b6b' }}>
+            {saveMsg}
+          </div>
+        )}
+        <button onClick={handleSave} disabled={saving} className="mobile-app-btn">
+          {saving ? 'Saving…' : 'Save Changes'}
+        </button>
       </div>
 
       <div className="mobile-app-profile-section">
@@ -210,20 +247,35 @@ function ProfilePanel({ profileData, setProfileData, membershipActive, membershi
                   {key === 'current' ? 'Current' : key === 'new' ? 'New' : 'Confirm'} Password
                 </label>
                 <div className="mobile-app-password-wrapper">
-                  <input type={showPwFields[key] ? 'text' : 'password'}
+                  <input
+                    type={showPwFields[key] ? 'text' : 'password'}
                     value={passwordData[`${key}Password`]}
                     onChange={e => setPasswordData({ ...passwordData, [`${key}Password`]: e.target.value })}
-                    className="mobile-app-form-input mobile-app-form-input-with-toggle" />
-                  <button onClick={() => setShowPwFields({ ...showPwFields, [key]: !showPwFields[key] })}
-                    className="mobile-app-password-toggle">
+                    className="mobile-app-form-input mobile-app-form-input-with-toggle"
+                    disabled={pwLoading}
+                  />
+                  <button
+                    onClick={() => setShowPwFields({ ...showPwFields, [key]: !showPwFields[key] })}
+                    className="mobile-app-password-toggle"
+                  >
                     {showPwFields[key] ? '👁️' : '👁️‍🗨️'}
                   </button>
                 </div>
               </div>
             ))}
+            {pwError && <div style={{ fontSize: 12, color: '#ff6b6b', marginBottom: 6 }}>{pwError}</div>}
+            {pwMsg   && <div style={{ fontSize: 12, color: '#5aaa5a', marginBottom: 6 }}>{pwMsg}</div>}
             <div className="mobile-app-btn-group">
-              <button onClick={handlePwChange} className="mobile-app-btn">Update Password</button>
-              <button onClick={() => setShowPasswordForm(false)} className="mobile-app-btn mobile-app-btn-cancel">Cancel</button>
+              <button onClick={handlePwChange} disabled={pwLoading} className="mobile-app-btn">
+                {pwLoading ? 'Updating…' : 'Update Password'}
+              </button>
+              <button
+                onClick={() => { setShowPasswordForm(false); setPwError(''); setPwMsg(''); }}
+                className="mobile-app-btn mobile-app-btn-cancel"
+                disabled={pwLoading}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}

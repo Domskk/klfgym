@@ -52,6 +52,25 @@ export const getProfile = async () => {
   return res.json();
 };
 
+// ── Profile ───────────────────────────────────────────────────────────────────
+export const updateProfile = async (data, token) => {
+  const res = await fetch(`${API_URL}/users/profile`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const updatePassword = async (currentPassword, newPassword, token) => {
+  const res = await fetch(`${API_URL}/users/profile/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return res.json();
+};
+
 // Assign or renew membership for an existing user
 export const updateMembership = async (userId, data, token) => {
   const res = await fetch(`${API_URL}/users/${userId}/membership`, {

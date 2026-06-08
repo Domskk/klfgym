@@ -4,10 +4,52 @@ const { getProfile, lookupByEmail, updateMembership } = require('../controllers/
 const authenticate   = require('../middleware/auth.middleware');
 const roleMiddleware = require('../middleware/role.middleware');
 const supabase = require('../config/db');
+const bcrypt = require('bcrypt');
 
 // GET /api/users/profile
 router.get('/profile', authenticate, getProfile);
 
+// PATCH /api/users/profile — update name/email
+router.patch('/profile', authenticate, async (req, res) => {
+  const { full_name, email } = req.body;
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .update({ full_name, email })
+      .eq('id', req.user.id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// PATCH /api/users/profile/password — change password
+router.patch('/profile/password', authenticate, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  try {
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id)
+      .single();
+
+    const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isValid) return res.status(400).json({ error: 'Current password is incorrect.' });
+
+    if (!newPassword || newPassword.length < 6)
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+
+    const password_hash = await bcrypt.hash(newPassword, 10);
+    await supabase.from('users').update({ password_hash }).eq('id', req.user.id);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
 // GET /api/users/lookup
 router.get('/lookup', authenticate, roleMiddleware(['admin', 'trainer']), lookupByEmail);
 
