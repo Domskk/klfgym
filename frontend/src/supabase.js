@@ -1,28 +1,31 @@
-// Placeholder auth helpers for frontend compatibility.
-// The server handles credential login at /api/auth, so these functions
-// are kept only to satisfy the existing Login component import.
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey  = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function signInWithGoogle() {
-  return {
-    error: new Error('Google sign-in is currently unavailable.'),
-  };
-}
-
-export async function sendPasswordReset(email) {
-  return {
-    error: new Error('Password reset is currently unavailable.'),
-  };
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  });
+  return { data, error };
 }
 
 export async function getSession() {
-  return {
-    session: null,
-    error: new Error('Session lookup is unavailable.'),
-  };
+  const { data, error } = await supabase.auth.getSession();
+  return { session: data?.session, error };
 }
 
 export async function signOut() {
-  return {
-    error: new Error('Sign-out is unavailable.'),
-  };
+  const { error } = await supabase.auth.signOut();
+  return { error };
+}
+
+export async function sendPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  return { error };
 }

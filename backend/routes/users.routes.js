@@ -3,6 +3,7 @@ const router = express.Router();
 const { getProfile, lookupByEmail, updateMembership } = require('../controllers/users.controller');
 const authenticate   = require('../middleware/auth.middleware');
 const roleMiddleware = require('../middleware/role.middleware');
+const { getUserAttendance, getUserAnalytics } = require('../controllers/attendance.controller');
 const supabase = require('../config/db');
 const bcrypt = require('bcrypt');
 
@@ -64,6 +65,9 @@ router.get('/', authenticate, roleMiddleware(['admin']), async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
+
+router.get('/attendance', authenticate, getUserAttendance);
+router.get('/analytics', authenticate, getUserAnalytics);
 
 // PATCH /api/users/:id/membership — assign or renew membership
 router.patch('/:id/membership', authenticate, roleMiddleware(['admin', 'trainer']), updateMembership);

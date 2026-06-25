@@ -162,7 +162,7 @@ export const deleteAnnouncement = async (id, token) => {
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 export const getAtRiskMembers = async (token) => {
-  const res = await fetch(`${API_URL}/analytics/at-risk`, {
+  const res = await fetch(`${API_URL}/analytics/at-risk?t=${Date.now()}`, { // ← add ?t=timestamp
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
@@ -176,11 +176,12 @@ export const getDropoutRisk = async (userId, token) => {
 };
 
 export const getAnalyticsStats = async (token) => {
-  const res = await fetch(`${API_URL}/analytics/stats`, {
-    headers: { Authorization: `Bearer ${token}`},
+  const res = await fetch(`${API_URL}/analytics/stats?t=${Date.now()}`, { // ← add ?t=timestamp
+    headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
-}
+};
+
 
 // ── Attendance ────────────────────────────────────────────────────────────────
 export const scanAttendance = async (qrToken, token) => {
@@ -249,6 +250,23 @@ export const updateBookingStatus = async (bookingId, status, token, cancelReason
       status,
       ...(cancelReason && { cancel_reason: cancelReason })
     }),
+  });
+  return res.json();
+};
+
+// ── Activity Tab ──────────────────────────────────────────────────────────────
+// Get user's attendance logs (for Activity tab)
+export const getUserAttendance = async (token) => {
+  const res = await fetch(`${API_URL}/users/attendance`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+};
+
+// Get user's engagement analytics (for Activity tab)
+export const getUserAnalytics = async (token) => {
+  const res = await fetch(`${API_URL}/users/analytics`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 };

@@ -247,5 +247,64 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ error: 'Failed to reset password.' });
   }
 };
+// ── Google Login / Auto-Register ──────────────────────────────────────────────
+const googleLogin = async (req, res) => {
+  const { email, full_name, google_id } = req.body;
+  try {
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
 
-module.exports = { register, login, cancelMembership, forgotPassword, resetPassword };
+    // Check if user already exists
+    let { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (!user) {
+      // Auto-register new Google user
+      const { data: newUser, error } = await supabase
+        .from('users')
+        .insert({
+          email,
+          full_name:     full_name || email.split('@')[0],
+          password_hash: `google_oauth_${google_id || crypto.randomBytes(16).toString('hex')}`,
+          role:          'member',
+          is_active:     true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      user = newUser;
+
+      // Generate QR
+      await generateQRForMember(user.id).catch(err =>
+        console.error('QR generation failed:', err.message)
+      );
+
+      // Seed analytics
+      refreshUserAnalytics(user.id).catch(err =>
+        console.error('Analytics seed failed:', err.message)
+      );
+    }
+
+    if (user.is_active === false)
+      return res.status(403).json({ error: 'Account is deactivated.' });
+
+    const token = generateToken(user);
+
+    res.json({
+      token,
+      user: {
+        id:        user.id,
+        email:     user.email,
+        full_name: user.full_name,
+        role:      user.role,
+      },
+    });
+  } catch (err) {
+    console.error('Google login error:', err);
+    res.status(500).json({ error: 'Google login failed.' });
+  }
+};
+module.exports = { register, login, cancelMembership, forgotPassword, resetPassword, googleLogin };

@@ -34,6 +34,14 @@ const MENU = [
     ),
   },
   {
+    id: 'activity', label: 'Activity',
+    icon: (active) => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? '#F0C040' : '#777'}>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+      </svg>
+    ),
+  },
+  {
     id: 'progress', label: 'Progress',
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? '#F0C040' : '#777'}>
@@ -76,6 +84,242 @@ function getWeekDays() {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start); d.setDate(start.getDate() + i); return d;
   });
+}
+
+// ─────────────────────────────────────────────
+// ActivityTab — Attendance & Engagement Logs
+// ─────────────────────────────────────────────
+function ActivityTab({ membershipActive }) {
+  const [attendanceLogs, setAttendanceLogs] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // 'all', 'week', 'month'
+
+  useEffect(() => {
+    const fetchActivityData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        // Fetch attendance logs
+        const attendRes = await fetch(`${API_URL}/users/attendance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const attendData = await attendRes.json();
+        if (attendRes.ok) {
+          setAttendanceLogs(Array.isArray(attendData) ? attendData : []);
+        }
+
+        // Fetch user analytics
+        const analyticsRes = await fetch(`${API_URL}/users/analytics`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const analyticsData = await analyticsRes.json();
+        if (analyticsRes.ok) {
+          setAnalytics(analyticsData);
+        }
+      } catch (err) {
+        console.error('Failed to load activity data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (membershipActive) {
+      fetchActivityData();
+    } else {
+      setLoading(false);
+    }
+  }, [membershipActive]);
+
+  const getFilteredLogs = () => {
+    if (!Array.isArray(attendanceLogs)) return [];
+    const now = new Date();
+    return attendanceLogs.filter(log => {
+      const logDate = new Date(log.scanned_at);
+      if (filter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return logDate >= weekAgo;
+      }
+      if (filter === 'month') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        return logDate >= monthAgo;
+      }
+      return true;
+    }).sort((a, b) => new Date(b.scanned_at) - new Date(a.scanned_at));
+  };
+
+  const filteredLogs = getFilteredLogs();
+
+  return (
+    <div style={{ padding: '20px', color: '#fff' }}>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Attendance & Activity</h1>
+
+      {!membershipActive ? (
+        <div style={{
+          textAlign: 'center', padding: '60px 20px', color: '#666',
+        }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
+          <div style={{ fontSize: 14, marginBottom: 8 }}>Membership Required</div>
+          <div style={{ fontSize: 12, color: '#555' }}>Activate a membership to view your activity logs</div>
+        </div>
+      ) : loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#666' }}>
+          Loading activity data...
+        </div>
+      ) : (
+        <>
+          {/* Stats Grid */}
+          {analytics && (
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24,
+            }}>
+              <div style={{
+                background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10,
+                padding: '16px', textAlign: 'center',
+              }}>
+                <div style={{ color: '#888', fontSize: 11, marginBottom: 6, textTransform: 'uppercase' }}>
+                  This Month
+                </div>
+                <div style={{ color: '#F0C040', fontSize: 28, fontWeight: 700 }}>
+                  {analytics.visits_last_30_days || 0}
+                </div>
+                <div style={{ color: '#666', fontSize: 11, marginTop: 4 }}>visits</div>
+              </div>
+
+              <div style={{
+                background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10,
+                padding: '16px', textAlign: 'center',
+              }}>
+                <div style={{ color: '#888', fontSize: 11, marginBottom: 6, textTransform: 'uppercase' }}>
+                  Current Streak
+                </div>
+                <div style={{ color: '#F0C040', fontSize: 28, fontWeight: 700 }}>
+                  {analytics.current_streak_days || 0}
+                </div>
+                <div style={{ color: '#666', fontSize: 11, marginTop: 4 }}>days</div>
+              </div>
+
+              <div style={{
+                background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10,
+                padding: '16px', textAlign: 'center',
+              }}>
+                <div style={{ color: '#888', fontSize: 11, marginBottom: 6, textTransform: 'uppercase' }}>
+                  This Week
+                </div>
+                <div style={{ color: '#F0C040', fontSize: 28, fontWeight: 700 }}>
+                  {analytics.visits_last_7_days || 0}
+                </div>
+                <div style={{ color: '#666', fontSize: 11, marginTop: 4 }}>visits</div>
+              </div>
+
+              <div style={{
+                background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10,
+                padding: '16px', textAlign: 'center',
+              }}>
+                <div style={{ color: '#888', fontSize: 11, marginBottom: 6, textTransform: 'uppercase' }}>
+                  Engagement
+                </div>
+                <div style={{ color: '#F0C040', fontSize: 28, fontWeight: 700 }}>
+                  {analytics.engagement_score || 0}%
+                </div>
+                <div style={{ color: '#666', fontSize: 11, marginTop: 4 }}>score</div>
+              </div>
+            </div>
+          )}
+
+          {/* Filter Tabs */}
+          <div style={{
+            display: 'flex', gap: 8, marginBottom: 16, borderBottom: '1px solid #2a2a2a',
+          }}>
+            {[
+              { id: 'all', label: 'All Time' },
+              { id: 'month', label: 'This Month' },
+              { id: 'week', label: 'This Week' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setFilter(tab.id)}
+                style={{
+                  padding: '12px 16px', border: 'none', background: 'transparent',
+                  color: filter === tab.id ? '#F0C040' : '#666',
+                  fontSize: 13, fontWeight: filter === tab.id ? 600 : 400,
+                  cursor: 'pointer', borderBottom: filter === tab.id ? '2px solid #F0C040' : 'none',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Attendance Logs */}
+          {filteredLogs.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {filteredLogs.map((log, idx) => {
+                const checkInTime = new Date(log.scanned_at);
+                const checkOutTime = log.checked_out_at ? new Date(log.checked_out_at) : null;
+                const duration = checkOutTime
+                  ? Math.round((checkOutTime - checkInTime) / (1000 * 60))
+                  : null;
+
+                return (
+                  <div key={log.id || idx} style={{
+                    background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10,
+                    padding: '14px', borderLeft: '4px solid #F0C040',
+                  }}>
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                      marginBottom: 8,
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
+                          {checkInTime.toLocaleDateString(undefined, {
+                            weekday: 'short', month: 'short', day: 'numeric',
+                          })}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                          {log.session_type ? log.session_type.charAt(0).toUpperCase() + log.session_type.slice(1) : 'General'}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#F0C040' }}>
+                          {formatTime(checkInTime)}
+                        </div>
+                        {checkOutTime && (
+                          <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                            – {formatTime(checkOutTime)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {duration && (
+                      <div style={{
+                        fontSize: 12, color: '#888', paddingTop: 8,
+                        borderTop: '1px solid #2a2a2a',
+                      }}>
+                        Session: <span style={{ color: '#ccc', fontWeight: 600 }}>{duration} min</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center', padding: '60px 20px', color: '#666',
+            }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+              <div style={{ fontSize: 14, marginBottom: 4 }}>No attendance records</div>
+              <div style={{ fontSize: 12, color: '#555' }}>
+                Check in at the gym entrance using your QR code
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -607,6 +851,7 @@ export default function MobileApp({ onLogout }) {
       />
     );
     if (active === 'qr') return <QRCodeTab />;
+    if (active === 'activity') return <ActivityTab membershipActive={membershipActive} />;
     if (active === 'progress') return <ProgressTab />;
     if (active === 'trainers') return <TrainersTab />;
     if (active === 'classes') return <ClassesTab />;
